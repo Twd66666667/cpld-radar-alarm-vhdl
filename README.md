@@ -6,17 +6,20 @@
 
 - 已建立 `radar_top` 顶层实体。
 - 已完成 `timebase` 时基模块，可由 1 MHz 主时钟产生 1 ms、250 ms、2 s 节拍和 2 Hz 方波。
-- 已通过 Quartus II 9.1 完整编译：27 / 1270 个逻辑单元，时序要求通过。
+- 已完成 `system_ctrl` 启动状态机，实现关闭、自检、待机、运行四个状态。
+- 顶层已连接时基与状态控制器；自检状态下16个LED以2 Hz闪烁。
+- 最新代码已通过 Quartus II 9.1 Analysis & Synthesis。
 - 实验板下载与实际波形验证待完成。
 
 ## 工程结构
 
 ```text
 rtl/
-  radar_top.vhd   顶层连接
-  timebase.vhd    时基与闪烁信号
-radar.qpf         Quartus 工程
-radar.qsf         器件、源文件及引脚设置
+  radar_top.vhd     顶层连接
+  timebase.vhd      时基与闪烁信号
+  system_ctrl.vhd   系统启动状态机
+radar.qpf           Quartus 工程
+radar.qsf           器件、源文件及引脚设置
 ```
 
 ## 开发约定
