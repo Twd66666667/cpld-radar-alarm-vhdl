@@ -1,0 +1,27 @@
+# Quartus generated databases
+db/
+incremental_db/
+output_files/
+simulation/
+
+# Quartus generated reports and programming files
+*.rpt
+*.summary
+*.smsg
+*.done
+*.pin
+*.pof
+*.sof
+*.qws
+*.qdb
+*.jdi
+*.bak
+*_description.txt
+
+# Local editor and operating-system files
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*~
+
