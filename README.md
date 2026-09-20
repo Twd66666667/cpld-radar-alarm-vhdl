@@ -1,4 +1,4 @@
-# CPLD Radar Alarm in VHDL
+# 雷达自动检测报警系统 in VHDL
 
 基于 EPM1270T144C5 数字实验板的雷达探测与报警课程项目，使用 VHDL 和 Quartus II 9.1 开发。
 
