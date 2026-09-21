@@ -24,4 +24,5 @@ simulation/
 Thumbs.db
 Desktop.ini
 *~
-
+*.cdf
+*.dpf

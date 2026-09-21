@@ -10,9 +10,14 @@
 - 已完成 `scan_ctrl` 扫描控制器，按 `0° → 45° → 90° → 135° → 180° → 135° → 90° → 45°` 循环输出角度。
 - 已完成 `servo_pwm` 舵机驱动，将五个扫描角度转换为20 ms周期的SG90控制脉冲。
 - 已完成 `ultrasonic` 测距时序模块，包括10 μs TRIG、ECHO双触发器同步、脉宽计数、等待超时和ECHO卡高保护。
-- 顶层已连接时基、系统状态、扫描控制和舵机PWM；超声波模块将在测距调度器完成后接入。
+- 已完成 `measure_ctrl` 测量调度器，在每次角度切换后等待250 ms再启动测距。
+- 已完成 `distance_calc` 距离换算和20～4000 mm有效范围判断。
+- 已完成 `alarm_led_ctrl` 距离分级及四色LED报警逻辑。
+- 已完成 `buzzer_ctrl` 分级鸣叫模块，尚待接入顶层。
+- 顶层已接入超声波测量、调度、距离换算和LED报警链路。
 - 舵机PWM和超声波三种场景均已通过Quartus II 9.1功能仿真。
-- 实验板下载和实物验证待完成。
+- 已完成LED自检、舵机角度顺序和扫描节拍的上板验证；舵机改用独立5 V电源后运行正常。
+- 超声波测距和声光报警的实物验证待下周完成。
 
 ## 工程结构
 
@@ -23,12 +28,18 @@ rtl/
   system_ctrl.vhd   系统启动状态机
   scan_ctrl.vhd     往返角度序列
   servo_pwm.vhd     SG90舵机PWM
-  ultrasonic.vhd    HC-SR04触发、回波计时和超时保护
+ultrasonic.vhd      HC-SR04触发、回波计时和超时保护
+  measure_ctrl.vhd     舵机稳定等待和测量调度
+  distance_calc.vhd    回波时间到毫米距离的换算
+  alarm_led_ctrl.vhd   距离分级和LED报警
+  buzzer_ctrl.vhd      分级蜂鸣器节奏
 tb/
   servo_pwm.vwf     Quartus舵机功能仿真输入波形
   ultrasonic.vwf    Quartus超声波功能仿真输入波形
   tb_servo_pwm.vhd  VHDL testbench，供外部仿真器使用
-docs/images/
+docs/
+  hardware_test_log.md  实物测试现象与整改记录
+  images/
   servo_pwm_simulation.png
   ultrasonic_normal_simulation.png
   ultrasonic_three_cases_simulation.png
@@ -47,7 +58,9 @@ radar.qsf           器件、源文件及仿真设置
 | 180° | 20 ms | 2.5 ms | 与设计一致 |
 | 禁用 | — | 0 | 输出保持低电平 |
 
-![SG90 PWM功能仿真](docs/images/servo_pwm_simulation.png)
+![SG90 PWM功能仿真](docs/
+  hardware_test_log.md  实物测试现象与整改记录
+  images/servo_pwm_simulation.png)
 
 实验报告可用结论：仿真结果表明，舵机驱动模块能够在1 MHz系统时钟下产生20 ms周期的PWM信号，并根据目标角度将高电平宽度分别调整为0.5 ms、1.5 ms和2.5 ms；关闭使能后输出保持低电平，模块功能符合SG90的控制时序要求。
 
@@ -63,14 +76,23 @@ radar.qsf           器件、源文件及仿真设置
 
 正常回波局部波形：
 
-![HC-SR04正常回波仿真](docs/images/ultrasonic_normal_simulation.png)
+![HC-SR04正常回波仿真](docs/
+  hardware_test_log.md  实物测试现象与整改记录
+  images/ultrasonic_normal_simulation.png)
 
 三种场景整体波形：
 
-![HC-SR04三种场景仿真](docs/images/ultrasonic_three_cases_simulation.png)
+![HC-SR04三种场景仿真](docs/
+  hardware_test_log.md  实物测试现象与整改记录
+  images/ultrasonic_three_cases_simulation.png)
 
 实验报告可用结论：功能仿真表明，超声波时序模块能够产生满足要求的TRIG脉冲，并正确测量同步后ECHO的高电平持续时间；当无回波或ECHO持续高电平时，模块均能在约30 ms后退出并给出无效结果，避免控制状态机永久阻塞。
 
+## 实物测试进展
+
+2026年9月21日已验证LED自检、舵机五档角度顺序和2秒扫描节拍。板载5 V直接驱动舵机时出现液晶背光变化和舵机供电不足；改用独立5 V并与实验板共地后，舵机运行正常。详细现象、判断依据和后期待整改项见[`docs/hardware_test_log.md`](docs/hardware_test_log.md)。
+
+超声波传感器当前没有实物，测距、距离分级和声光报警的上板验证安排在下周进行。
 ## 开发约定
 
 - 主时钟使用实验板的1 MHz时钟。
