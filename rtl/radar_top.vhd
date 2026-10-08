@@ -8,7 +8,14 @@ entity radar_top is
 		led : out std_logic_vector(15 downto 0);
 		servo_pwm_out :out std_logic;
 		echo_in  :in std_logic;
-		trig_out  :out std_logic
+		trig_out  :out std_logic;
+		buzzer_out    : out std_logic;
+		seg : out std_logic_vector(6 downto 0);
+		cat : out std_logic_vector(7 downto 0);
+
+		matrix_row       : out std_logic_vector(7 downto 0);
+		matrix_red_col   : out std_logic_vector(0 to 7);
+		matrix_green_col : out std_logic_vector(0 to 7)
 
 	);
 end entity radar_top;
@@ -28,6 +35,7 @@ architecture structural of radar_top is
 	signal angle_deg_s : integer range 0 to 180;
 
 	signal servo_enable_s : std_logic;
+	signal servo_quiet_s  : std_logic;
 
 	signal ultra_start_s   : std_logic;
 	signal ultra_busy_s    : std_logic;
@@ -38,12 +46,34 @@ architecture structural of radar_top is
 	signal distance_mm_s    : integer range 0 to 4000;
 	signal distance_valid_s : std_logic;
 
+	signal filtered_done_s           : std_logic;
+	signal filtered_distance_mm_s    : integer range 0 to 4000;
+	signal filtered_distance_valid_s : std_logic;
+
+	signal distance_digit_1000_s : integer range 0 to 9;
+	signal distance_digit_100_s  : integer range 0 to 9;
+	signal distance_digit_10_s   : integer range 0 to 9;
+	signal distance_digit_1_s    : integer range 0 to 9;
+	signal distance_bcd_valid_s  : std_logic;
+
 	signal led_alarm_s   : std_logic_vector(15 downto 0);
 	signal alarm_level_s : integer range 0 to 4;
 
+	signal distance_0_mm_s   : integer range 0 to 4000;
+	signal distance_45_mm_s  : integer range 0 to 4000;
+	signal distance_90_mm_s  : integer range 0 to 4000;
+	signal distance_135_mm_s : integer range 0 to 4000;
+	signal distance_180_mm_s : integer range 0 to 4000;
+
+	signal valid_0_s   : std_logic;
+	signal valid_45_s  : std_logic;
+	signal valid_90_s  : std_logic;
+	signal valid_135_s : std_logic;
+	signal valid_180_s : std_logic;
+
 begin
 	system_rst <=not sw7;
-	servo_enable_s <= standby_en_s or run_en_s;
+	servo_enable_s <= (standby_en_s or run_en_s) and not servo_quiet_s;
 	u_timebase : entity work.timebase
 		port map (
 			clk    => clk,
@@ -86,12 +116,14 @@ begin
 	port map (
 		clk         => clk,
 		rst         => system_rst,
+		tick_1ms    => tick_1ms_s,
 		run_en      => run_en_s,
 		tick_250ms  => tick_250ms_s,
 		tick_2s     => tick_2s_s,
 		ultra_busy  => ultra_busy_s,
 		ultra_done  => ultra_done_s,
-		ultra_start => ultra_start_s
+		ultra_start => ultra_start_s,
+		servo_quiet => servo_quiet_s
 	);
 
 	u_ultrasonic : entity work.ultrasonic
@@ -118,14 +150,127 @@ begin
 		distance_valid => distance_valid_s
 	);
 
+
+	u_distance_median3 : entity work.distance_median3
+	port map (
+		clk               => clk,
+		rst               => system_rst,
+		run_en            => run_en_s,
+		sample_done       => ultra_done_s,
+		sample_distance   => distance_mm_s,
+		sample_valid      => distance_valid_s,
+		result_done       => filtered_done_s,
+		filtered_distance => filtered_distance_mm_s,
+		filtered_valid    => filtered_distance_valid_s
+	);
+
+	u_distance_bcd : entity work.distance_bcd
+	port map (
+		clk            => clk,
+		rst            => system_rst,
+		result_done    => filtered_done_s,
+		distance_mm    => filtered_distance_mm_s,
+		distance_valid => filtered_distance_valid_s,
+		digit_1000     => distance_digit_1000_s,
+		digit_100      => distance_digit_100_s,
+		digit_10       => distance_digit_10_s,
+		digit_1        => distance_digit_1_s,
+		bcd_valid      => distance_bcd_valid_s
+	);
+
+	u_direction_store : entity work.direction_store
+	port map (
+		clk             => clk,
+		rst             => system_rst,
+		run_en          => run_en_s,
+		result_done     => filtered_done_s,
+		angle_deg       => angle_deg_s,
+		distance_mm     => filtered_distance_mm_s,
+		distance_valid  => filtered_distance_valid_s,
+
+		distance_0_mm   => distance_0_mm_s,
+		distance_45_mm  => distance_45_mm_s,
+		distance_90_mm  => distance_90_mm_s,
+		distance_135_mm => distance_135_mm_s,
+		distance_180_mm => distance_180_mm_s,
+
+		valid_0         => valid_0_s,
+		valid_45        => valid_45_s,
+		valid_90        => valid_90_s,
+		valid_135       => valid_135_s,
+		valid_180       => valid_180_s
+	);
+
+	u_dot_matrix_ctrl : entity work.dot_matrix_ctrl
+	port map (
+		clk             => clk,
+		rst             => system_rst,
+		tick_1ms        => tick_1ms_s,
+
+		blink_2hz       => blink_2hz_s,
+		self_test_en    => self_test_en_s,
+		standby_en      => standby_en_s,
+		run_en          => run_en_s,
+
+		angle_deg       => angle_deg_s,
+
+		distance_0_mm   => distance_0_mm_s,
+		distance_45_mm  => distance_45_mm_s,
+		distance_90_mm  => distance_90_mm_s,
+		distance_135_mm => distance_135_mm_s,
+		distance_180_mm => distance_180_mm_s,
+
+		valid_0         => valid_0_s,
+		valid_45        => valid_45_s,
+		valid_90        => valid_90_s,
+		valid_135       => valid_135_s,
+		valid_180       => valid_180_s,
+
+		matrix_row       => matrix_row,
+		matrix_red_col   => matrix_red_col,
+		matrix_green_col => matrix_green_col
+	);
+
 	u_alarm_led_ctrl : entity work.alarm_led_ctrl
 	port map (
 		run_en         => run_en_s,
-		distance_valid => distance_valid_s,
-		distance_mm    => distance_mm_s,
+		distance_valid => filtered_distance_valid_s,
+		distance_mm    => filtered_distance_mm_s,
 		blink_2hz      => blink_2hz_s,
 		led_alarm      => led_alarm_s,
 		alarm_level    => alarm_level_s
+	);
+
+	u_buzzer_ctrl : entity work.buzzer_ctrl
+	port map (
+		clk         => clk,
+		rst         => system_rst,
+		run_en      => run_en_s,
+		tick_1ms    => tick_1ms_s,
+		alarm_level => alarm_level_s,
+		buzzer_out  => buzzer_out
+	);
+
+	u_seg_display_ctrl : entity work.seg_display_ctrl
+	port map (
+		clk            => clk,
+		rst            => system_rst,
+		tick_1ms       => tick_1ms_s,
+		blink_2hz      => blink_2hz_s,
+
+		self_test_en   => self_test_en_s,
+		standby_en     => standby_en_s,
+		run_en         => run_en_s,
+
+		angle_deg      => angle_deg_s,
+		distance_1000  => distance_digit_1000_s,
+		distance_100   => distance_digit_100_s,
+		distance_10    => distance_digit_10_s,
+		distance_1     => distance_digit_1_s,
+		distance_valid => distance_bcd_valid_s,
+
+		seg            => seg,
+		cat            => cat
 	);
 
 	led <=(others => blink_2hz_s) when self_test_en_s = '1'

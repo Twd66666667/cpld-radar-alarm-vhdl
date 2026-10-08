@@ -28,7 +28,7 @@ architecture rtl of ultrasonic is
 			DONE_STATE
 		);
 		signal current_state : state_type := IDLE_STATE;
-		signal trig_count : integer range 0 to 9 :=0;
+		signal trig_count : integer range 0 to 19 := 0;
 
 		signal wait_count    : integer range 0 to 29999 := 0;
 		signal echo_time_reg : integer range 0 to 30000 := 0;
@@ -81,7 +81,7 @@ begin
 						end if;
 
 					when TRIGGER_STATE =>
-						if trig_count = 9 then
+						if trig_count = 19 then
 							trig_count <= 0;
 							wait_count <= 0;
 							current_state <= WAIT_ECHO_STATE;
