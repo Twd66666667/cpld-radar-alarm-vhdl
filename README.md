@@ -1,102 +1,109 @@
-# 雷达自动检测报警系统 in VHDL
+# 雷达自动检测报警系统（VHDL）
 
-基于 EPM1270T144C5 数字实验板的雷达探测与报警课程项目，使用 VHDL 和 Quartus II 9.1 开发。
+本项目基于 EPM1270T144C5 数字实验板，使用 VHDL 和 Quartus II 9.1 实现舵机扫描、超声波测距、距离滤波、数码管显示、点阵雷达图以及声光报警。
 
 ## 当前进度
 
-- 已建立 `radar_top` 顶层实体。
-- 已完成 `timebase` 时基模块，可由1 MHz主时钟产生1 ms、250 ms、2 s节拍和2 Hz方波。
-- 已完成 `system_ctrl` 启动状态机，实现关闭、自检、待机、运行四个状态。
-- 已完成 `scan_ctrl` 扫描控制器，按 `0° → 45° → 90° → 135° → 180° → 135° → 90° → 45°` 循环输出角度。
-- 已完成 `servo_pwm` 舵机驱动，将五个扫描角度转换为20 ms周期的SG90控制脉冲。
-- 已完成 `ultrasonic` 测距时序模块，包括10 μs TRIG、ECHO双触发器同步、脉宽计数、等待超时和ECHO卡高保护。
-- 已完成 `measure_ctrl` 测量调度器，在每次角度切换后等待250 ms再启动测距。
-- 已完成 `distance_calc` 距离换算和20～4000 mm有效范围判断。
-- 已完成 `alarm_led_ctrl` 距离分级及四色LED报警逻辑。
-- 已完成 `buzzer_ctrl` 分级鸣叫模块，尚待接入顶层。
-- 顶层已接入超声波测量、调度、距离换算和LED报警链路。
-- 舵机PWM和超声波三种场景均已通过Quartus II 9.1功能仿真。
-- 已完成LED自检、舵机角度顺序和扫描节拍的上板验证；舵机改用独立5 V电源后运行正常。
-- 超声波测距和声光报警的实物验证待下周完成。
+基础功能已经接入 `radar_top` 顶层并通过完整编译。加入舵机静默期后，实物测试中的测距、数码管显示和声光报警流程已经基本可以稳定工作。
 
-## 工程结构
+目前还需要下次上板完成三项工作：
+
+- 校准超声波测量距离；
+- 校准 SG90 五个角度对应的 PWM 脉宽；
+- 进行较长时间、多角度和不同距离下的稳定性测试。
+
+## 系统工作流程
+
+SW7 打开后，系统先进行 2 秒自检，再进入 2 秒待机，随后开始扫描。扫描角度按照下面的顺序循环：
+
+```text
+0° -> 45° -> 90° -> 135° -> 180° -> 135° -> 90° -> 45°
+```
+
+每个角度保持约 2 秒。舵机先接收 500 ms PWM，到达目标位置后关闭 PWM，再等待 50 ms，使电源和地线扰动减小。随后超声波连续测量 3 次，相邻两次间隔 60 ms。
+
+三次结果全部有效时取中值，两次有效时取平均值；少于两次有效时，本轮结果判为无效。角度切换后，旧距离不会继续驱动当前角度的数码管、LED和蜂鸣器，只有当前角度的新测量完成后才恢复显示和报警。
+
+## 距离分级
+
+| 距离范围 | 点阵颜色 | LED与蜂鸣器状态 |
+|---|---|---|
+| `distance >= 800 mm` | 绿色 | 4个低位LED常亮，不发声 |
+| `600 mm <= distance < 800 mm` | 黄绿色 | 4个LED以2 Hz闪烁，低频鸣叫 |
+| `400 mm <= distance < 600 mm` | 黄色 | 4个LED以2 Hz闪烁，中低频鸣叫 |
+| `200 mm <= distance < 400 mm` | 橙色 | 4个LED以2 Hz闪烁，中高频鸣叫 |
+| `distance < 200 mm` | 红色 | 16个LED以2 Hz闪烁，高频鸣叫 |
+
+无有效测量结果时，距离显示为横线，当前角度不触发报警。
+
+## 主要模块
 
 ```text
 rtl/
-  radar_top.vhd     顶层连接
-  timebase.vhd      时基与闪烁信号
-  system_ctrl.vhd   系统启动状态机
-  scan_ctrl.vhd     往返角度序列
-  servo_pwm.vhd     SG90舵机PWM
-ultrasonic.vhd      HC-SR04触发、回波计时和超时保护
-  measure_ctrl.vhd     舵机稳定等待和测量调度
-  distance_calc.vhd    回波时间到毫米距离的换算
-  alarm_led_ctrl.vhd   距离分级和LED报警
-  buzzer_ctrl.vhd      分级蜂鸣器节奏
+  radar_top.vhd          顶层连接与当前角度结果门控
+  timebase.vhd           1 ms、250 ms、2 s节拍和2 Hz闪烁信号
+  system_ctrl.vhd        关闭、自检、待机和运行状态控制
+  scan_ctrl.vhd          五个方向的往返扫描序列
+  servo_pwm.vhd          SG90舵机20 ms周期PWM
+  measure_ctrl.vhd       舵机稳定、静默和三次测量调度
+  ultrasonic.vhd         HC-SR04触发、ECHO计时及超时保护
+  distance_calc.vhd      回波时间到毫米距离的换算
+  distance_median3.vhd   三次测量筛选与中值处理
+  distance_bcd.vhd       距离的BCD分解
+  direction_store.vhd    五个方向的距离和有效标志存储
+  seg_display_ctrl.vhd   八位数码管动态显示
+  seg_decoder.vhd        七段数码管译码
+  dot_matrix_ctrl.vhd    8×8双色点阵雷达图
+  alarm_led_ctrl.vhd     距离分级和LED控制
+  buzzer_ctrl.vhd        分级蜂鸣器节奏
+
 tb/
-  servo_pwm.vwf     Quartus舵机功能仿真输入波形
-  ultrasonic.vwf    Quartus超声波功能仿真输入波形
-  tb_servo_pwm.vhd  VHDL testbench，供外部仿真器使用
+  servo_pwm.vwf          舵机PWM模块仿真
+  ultrasonic.vwf         超声波模块仿真
+  measure_ctrl.vwf       静默期和三次测量调度仿真
+
 docs/
-  hardware_test_log.md  实物测试现象与整改记录
-  images/
-  servo_pwm_simulation.png
-  ultrasonic_normal_simulation.png
-  ultrasonic_three_cases_simulation.png
-radar.qpf           Quartus工程
-radar.qsf           器件、源文件及仿真设置
+  hardware_test_log.md   实物测试现象与整改记录
+  images/                仿真截图
+
+radar.qpf                Quartus工程文件
+radar.qsf                器件、引脚、时钟和源文件设置
 ```
 
-## SG90舵机PWM仿真
+## 仿真方法
 
-仿真使用1 MHz时钟和Quartus II 9.1功能仿真器。`enable`拉高后，依次输入0°、90°和180°；最后关闭使能，检查PWM是否停止。仿真器以0错误、0警告完成。
+本项目使用 Quartus II 9.1 自带的 VWF 波形文件进行仿真，不以 VHDL testbench 作为操作流程。
 
-| 输入角度 | PWM周期 | 设计高电平宽度 | 仿真结果 |
-|---:|---:|---:|---|
-| 0° | 20 ms | 0.5 ms | 与设计一致 |
-| 90° | 20 ms | 1.5 ms | 与设计一致 |
-| 180° | 20 ms | 2.5 ms | 与设计一致 |
-| 禁用 | — | 0 | 输出保持低电平 |
+仿真采用分层方式：先分别验证各功能模块，再用顶层 VWF 检查系统状态、舵机静默、超声波启动和结果更新是否按顺序触发。顶层仿真只检查主流程，不同时展开所有内部数据，以免波形过于复杂。
 
-![SG90 PWM功能仿真](docs/
-  hardware_test_log.md  实物测试现象与整改记录
-  images/servo_pwm_simulation.png)
+### SG90 PWM仿真
 
-实验报告可用结论：仿真结果表明，舵机驱动模块能够在1 MHz系统时钟下产生20 ms周期的PWM信号，并根据目标角度将高电平宽度分别调整为0.5 ms、1.5 ms和2.5 ms；关闭使能后输出保持低电平，模块功能符合SG90的控制时序要求。
+`servo_pwm.vwf` 验证了 20 ms PWM周期，以及0°、90°和180°对应的高电平宽度。
 
-## HC-SR04超声波时序仿真
+![SG90 PWM功能仿真](docs/images/servo_pwm_simulation.png)
 
-仿真同样采用1 MHz时钟。每次 `start` 到来后，模块产生10 μs TRIG，随后等待并同步ECHO。`done`为单周期完成脉冲；正常测量后 `valid`保持为1，直到下一次 `start` 清除；异常测量保持无效。
+### HC-SR04仿真
 
-| 场景 | 输入 | 结果 |
-|---|---|---|
-| 正常回波 | ECHO高电平约1096 μs | `echo_time_us=1096`，`done=1`，结果有效 |
-| 无回波 | ECHO持续为0 | 等待约30 ms后结束，`done=1`，`valid=0`，结果为0 |
-| ECHO卡高 | ECHO上升后不下降 | 测量约30 ms后结束，`done=1`，`valid=0`，结果为0 |
+`ultrasonic.vwf` 验证了20 μs TRIG、正常回波计时、30 ms无回波超时和ECHO卡高保护。`done`为一个主时钟周期的完成脉冲。
 
-正常回波局部波形：
+![HC-SR04正常回波仿真](docs/images/ultrasonic_normal_simulation.png)
 
-![HC-SR04正常回波仿真](docs/
-  hardware_test_log.md  实物测试现象与整改记录
-  images/ultrasonic_normal_simulation.png)
+![HC-SR04三种场景仿真](docs/images/ultrasonic_three_cases_simulation.png)
 
-三种场景整体波形：
+## 工程状态
 
-![HC-SR04三种场景仿真](docs/
-  hardware_test_log.md  实物测试现象与整改记录
-  images/ultrasonic_three_cases_simulation.png)
+- 顶层实体：`radar_top`
+- 目标器件：`EPM1270T144C5`
+- 主时钟：1 MHz
+- 时钟约束：1 MHz
+- 未使用引脚：三态输入
+- 当前逻辑资源占用约90%，继续加入大型模块前需要先优化资源
 
-实验报告可用结论：功能仿真表明，超声波时序模块能够产生满足要求的TRIG脉冲，并正确测量同步后ECHO的高电平持续时间；当无回波或ECHO持续高电平时，模块均能在约30 ms后退出并给出无效结果，避免控制状态机永久阻塞。
+完整实物现象和后续校准项目见 [硬件测试记录](docs/hardware_test_log.md)。
 
-## 实物测试进展
-
-2026年9月21日已验证LED自检、舵机五档角度顺序和2秒扫描节拍。板载5 V直接驱动舵机时出现液晶背光变化和舵机供电不足；改用独立5 V并与实验板共地后，舵机运行正常。详细现象、判断依据和后期待整改项见[`docs/hardware_test_log.md`](docs/hardware_test_log.md)。
-
-超声波传感器当前没有实物，测距、距离分级和声光报警的上板验证安排在下周进行。
 ## 开发约定
 
-- 主时钟使用实验板的1 MHz时钟。
-- 所有时序模块使用同一个主时钟，以单周期 `tick` 作为时钟使能。
-- 每完成一个可以独立检查的模块后进行一次Git提交。
-- `db`、编译报告和下载文件属于可再生文件，不提交到仓库。
-
+- 所有时序模块使用同一个1 MHz主时钟，以单周期 `tick` 作为时钟使能；
+- 每个模块先独立检查，再接入顶层；
+- 仿真只使用 `.vwf` 文件；
+- `db/`、编译报告、下载文件和其他可再生文件不提交到仓库。

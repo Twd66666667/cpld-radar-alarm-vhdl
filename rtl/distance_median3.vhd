@@ -123,19 +123,8 @@ begin
                                     (sample_1 + sample_distance) / 2;
                                 filtered_valid_reg <= '1';
 
-                            -- One valid sample is still better than reporting no target.
-                            elsif sample_0_valid = '1' then
-                                filtered_distance_reg <= sample_0;
-                                filtered_valid_reg <= '1';
-
-                            elsif sample_1_valid = '1' then
-                                filtered_distance_reg <= sample_1;
-                                filtered_valid_reg <= '1';
-
-                            elsif sample_valid = '1' then
-                                filtered_distance_reg <= sample_distance;
-                                filtered_valid_reg <= '1';
-
+                            -- Fewer than two valid samples are not reliable enough
+                            -- to update the display or alarm outputs.
                             else
                                 filtered_distance_reg <= 0;
                                 filtered_valid_reg <= '0';

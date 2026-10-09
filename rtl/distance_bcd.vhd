@@ -5,6 +5,7 @@ entity distance_bcd is
 port (
     clk            : in  std_logic;
     rst            : in  std_logic;
+    clear          : in  std_logic;
     result_done    : in  std_logic;
     distance_mm    : in  integer range 0 to 4000;
     distance_valid : in  std_logic;
@@ -46,7 +47,7 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if rst = '1' then
+            if rst = '1' or clear = '1' then
                 current_state <= IDLE_STATE;
                 result_done_d <= '0';
                 work_value <= 0;

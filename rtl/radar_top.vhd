@@ -33,6 +33,9 @@ architecture structural of radar_top is
 	signal run_en_s       : std_logic;
 
 	signal angle_deg_s : integer range 0 to 180;
+	signal previous_angle_deg_s : integer range 0 to 180 := 0;
+	signal angle_changed_s       : std_logic;
+	signal current_result_ready_s : std_logic := '0';
 
 	signal servo_enable_s : std_logic;
 	signal servo_quiet_s  : std_logic;
@@ -58,6 +61,8 @@ architecture structural of radar_top is
 
 	signal led_alarm_s   : std_logic_vector(15 downto 0);
 	signal alarm_level_s : integer range 0 to 4;
+	signal alarm_distance_valid_s   : std_logic;
+	signal display_distance_valid_s : std_logic;
 
 	signal distance_0_mm_s   : integer range 0 to 4000;
 	signal distance_45_mm_s  : integer range 0 to 4000;
@@ -74,6 +79,38 @@ architecture structural of radar_top is
 begin
 	system_rst <=not sw7;
 	servo_enable_s <= (standby_en_s or run_en_s) and not servo_quiet_s;
+
+	-- A new angle must not reuse the preceding angle's distance result.
+	angle_changed_s <= '1'
+		when run_en_s = '1' and angle_deg_s /= previous_angle_deg_s
+		else '0';
+
+	alarm_distance_valid_s <=
+		filtered_distance_valid_s and current_result_ready_s and
+		not angle_changed_s;
+
+	display_distance_valid_s <=
+		distance_bcd_valid_s and current_result_ready_s and
+		not angle_changed_s;
+
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			if system_rst = '1' or run_en_s = '0' then
+				previous_angle_deg_s  <= angle_deg_s;
+				current_result_ready_s <= '0';
+			else
+				previous_angle_deg_s <= angle_deg_s;
+
+				if angle_deg_s /= previous_angle_deg_s then
+					current_result_ready_s <= '0';
+				elsif filtered_done_s = '1' then
+					current_result_ready_s <= filtered_distance_valid_s;
+				end if;
+			end if;
+		end if;
+	end process;
+
 	u_timebase : entity work.timebase
 		port map (
 			clk    => clk,
@@ -168,6 +205,7 @@ begin
 	port map (
 		clk            => clk,
 		rst            => system_rst,
+		clear          => angle_changed_s,
 		result_done    => filtered_done_s,
 		distance_mm    => filtered_distance_mm_s,
 		distance_valid => filtered_distance_valid_s,
@@ -234,7 +272,7 @@ begin
 	u_alarm_led_ctrl : entity work.alarm_led_ctrl
 	port map (
 		run_en         => run_en_s,
-		distance_valid => filtered_distance_valid_s,
+		distance_valid => alarm_distance_valid_s,
 		distance_mm    => filtered_distance_mm_s,
 		blink_2hz      => blink_2hz_s,
 		led_alarm      => led_alarm_s,
@@ -267,7 +305,7 @@ begin
 		distance_100   => distance_digit_100_s,
 		distance_10    => distance_digit_10_s,
 		distance_1     => distance_digit_1_s,
-		distance_valid => distance_bcd_valid_s,
+		distance_valid => display_distance_valid_s,
 
 		seg            => seg,
 		cat            => cat

@@ -50,6 +50,9 @@ set_global_assignment -name SIMULATION_MODE FUNCTIONAL
 set_global_assignment -name SIMULATOR_GENERATE_POWERPLAY_VCD_FILE OFF
 set_global_assignment -name SIMULATOR_GENERATE_SIGNAL_ACTIVITY_FILE OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name FMAX_REQUIREMENT "1 MHz" -section_id clk_1mhz
+set_instance_assignment -name CLOCK_SETTINGS clk_1mhz -to clk
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
 set_location_assignment PIN_18 -to clk
 set_location_assignment PIN_125 -to sw7
 set_location_assignment PIN_51 -to servo_pwm_out
@@ -132,9 +135,9 @@ set_location_assignment PIN_45 -to matrix_green_col[0]
 set_global_assignment -name MISC_FILE "C:/TD/digital elc2/radar.dpf"
 set_global_assignment -name VHDL_FILE rtl/distance_median3.vhd
 
-set_global_assignment -name VHDL_FILE tb/tb_measure_ctrl.vhd
-set_global_assignment -name VECTOR_WAVEFORM_FILE db/radar_measure_ctrl.vwf
 set_global_assignment -name VECTOR_WAVEFORM_FILE tb/measure_ctrl.vwf
 set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE tb/measure_ctrl.vwf
 set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
 set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
