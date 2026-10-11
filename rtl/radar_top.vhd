@@ -15,7 +15,14 @@ entity radar_top is
 
 		matrix_row       : out std_logic_vector(7 downto 0);
 		matrix_red_col   : out std_logic_vector(0 to 7);
-		matrix_green_col : out std_logic_vector(0 to 7)
+		matrix_green_col : out std_logic_vector(0 to 7);
+
+		lcd_db           : out std_logic_vector(7 downto 0);
+		lcd_a0           : out std_logic;
+		lcd_wr_n         : out std_logic;
+		lcd_rd_n         : out std_logic;
+		lcd_cs_n         : out std_logic;
+		lcd_rst_n        : out std_logic
 
 	);
 end entity radar_top;
@@ -75,6 +82,16 @@ architecture structural of radar_top is
 	signal valid_90_s  : std_logic;
 	signal valid_135_s : std_logic;
 	signal valid_180_s : std_logic;
+
+	signal level_0_s   : integer range 0 to 5;
+	signal level_45_s  : integer range 0 to 5;
+	signal level_90_s  : integer range 0 to 5;
+	signal level_135_s : integer range 0 to 5;
+	signal level_180_s : integer range 0 to 5;
+
+	signal lcd_render_page_s : integer range 0 to 7;
+	signal lcd_render_col_s  : integer range 0 to 127;
+	signal lcd_pixel_byte_s  : std_logic_vector(7 downto 0);
 
 begin
 	system_rst <=not sw7;
@@ -264,9 +281,52 @@ begin
 		valid_135       => valid_135_s,
 		valid_180       => valid_180_s,
 
+		level_0         => level_0_s,
+		level_45        => level_45_s,
+		level_90        => level_90_s,
+		level_135       => level_135_s,
+		level_180       => level_180_s,
+
 		matrix_row       => matrix_row,
 		matrix_red_col   => matrix_red_col,
 		matrix_green_col => matrix_green_col
+	);
+
+	u_lcd_radar_renderer : entity work.lcd_radar_renderer
+	port map (
+		self_test_en => self_test_en_s,
+		standby_en   => standby_en_s,
+		run_en       => run_en_s,
+		blink_2hz    => blink_2hz_s,
+		level_0      => level_0_s,
+		level_45     => level_45_s,
+		level_90     => level_90_s,
+		level_135    => level_135_s,
+		level_180    => level_180_s,
+
+		render_page  => lcd_render_page_s,
+		render_col   => lcd_render_col_s,
+		pixel_byte   => lcd_pixel_byte_s
+	);
+
+	u_lcd12864_ctrl : entity work.lcd12864_ctrl
+	port map (
+		clk          => clk,
+		rst          => system_rst,
+		tick_1ms     => tick_1ms_s,
+		tick_250ms   => tick_250ms_s,
+
+		pixel_byte   => lcd_pixel_byte_s,
+		render_page  => lcd_render_page_s,
+		render_col   => lcd_render_col_s,
+		init_done    => open,
+
+		lcd_db       => lcd_db,
+		lcd_a0       => lcd_a0,
+		lcd_wr_n     => lcd_wr_n,
+		lcd_rd_n     => lcd_rd_n,
+		lcd_cs_n     => lcd_cs_n,
+		lcd_rst_n    => lcd_rst_n
 	);
 
 	u_alarm_led_ctrl : entity work.alarm_led_ctrl

@@ -141,3 +141,22 @@ set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
 set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
 
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
+
+set_global_assignment -name VHDL_FILE rtl/lcd_bus_writer.vhd
+set_global_assignment -name VHDL_FILE rtl/lcd12864_ctrl.vhd
+set_global_assignment -name VHDL_FILE rtl/lcd_radar_renderer.vhd
+
+# LCM12864 parallel interface (board manual pin table)
+set_location_assignment PIN_32 -to lcd_rd_n
+set_location_assignment PIN_37 -to lcd_wr_n
+set_location_assignment PIN_48 -to lcd_a0
+set_location_assignment PIN_109 -to lcd_rst_n
+set_location_assignment PIN_108 -to lcd_cs_n
+set_location_assignment PIN_107 -to lcd_db[7]
+set_location_assignment PIN_106 -to lcd_db[6]
+set_location_assignment PIN_105 -to lcd_db[5]
+set_location_assignment PIN_104 -to lcd_db[4]
+set_location_assignment PIN_103 -to lcd_db[3]
+set_location_assignment PIN_102 -to lcd_db[2]
+set_location_assignment PIN_110 -to lcd_db[1]
+set_location_assignment PIN_101 -to lcd_db[0]

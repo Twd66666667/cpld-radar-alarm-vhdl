@@ -20,6 +20,12 @@ port (
     valid_90        : in  std_logic;
     valid_135       : in  std_logic;
     valid_180       : in  std_logic;
+
+    level_0         : out integer range 0 to 5;
+    level_45        : out integer range 0 to 5;
+    level_90        : out integer range 0 to 5;
+    level_135       : out integer range 0 to 5;
+    level_180       : out integer range 0 to 5;
     
     blink_2hz    : in std_logic;
 	self_test_en : in std_logic;
@@ -124,6 +130,13 @@ architecture rtl of dot_matrix_ctrl is
 	
 		
 begin
+
+	-- Reuse the five distance classifications in the LCD renderer.
+	level_0   <= color_0;
+	level_45  <= color_45;
+	level_90  <= color_90;
+	level_135 <= color_135;
+	level_180 <= color_180;
 	
 	with angle_deg select
 	current_color <=
@@ -234,11 +247,11 @@ begin
 
 		elsif run_en = '1' then
 			case scan_row is
-        -- ×îÏÂÃæÈýÐÐÃ»ÓÐÍ¼°¸£¬±£³ÖÄ¬ÈÏÏ¨Ãð
+        -- æœ€ä¸‹é¢ä¸‰è¡Œæ²¡æœ‰å›¾æ¡ˆï¼Œä¿æŒé»˜è®¤ç†„ç­
         when 0 | 1 | 2 =>
             null;
 
-        -- Ë®Æ½Ïß£º×ó±ß180¡ã£¬ÖÐÐÄÎªµ±Ç°½Ç¶È£¬ÓÒ±ß0¡ã
+        -- æ°´å¹³çº¿ï¼šå·¦è¾¹180Â°ï¼Œä¸­å¿ƒä¸ºå½“å‰è§’åº¦ï¼Œå³è¾¹0Â°
         when 3 =>
             matrix_red_col(0 to 2) <=
                 (others => get_red_level(color_180, mix_phase));
@@ -258,7 +271,7 @@ begin
             matrix_green_col(4 to 6) <=
                 (others => get_green_level(color_0, mix_phase));
 
-        -- 135¡ã¡¢90¡ã¡¢45¡ã
+        -- 135Â°ã€90Â°ã€45Â°
         when 4 =>
             matrix_red_col(2) <=
                 get_red_level(color_135, mix_phase);
@@ -307,7 +320,7 @@ begin
             matrix_green_col(6) <=
                 get_green_level(color_45, mix_phase);
 
-        -- ×îÉÏ·½Ö»ÓÐ90¡ãÏß
+        -- æœ€ä¸Šæ–¹åªæœ‰90Â°çº¿
         when 7 =>
             matrix_red_col(3) <=
                 get_red_level(color_90, mix_phase);

@@ -18,7 +18,7 @@ architecture rtl of distance_calc is
 begin
 
 	process(clk)
-		variable calculated_mm : integer range 0 to 5100;
+		variable calculated_mm : integer range 0 to 5200;
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
@@ -27,7 +27,12 @@ begin
 
 			elsif done = '1' then
 				if valid = '1' then
-					calculated_mm := (echo_time_us * 17)/100;
+					-- 11/64 = 0.171875, close to the original 17/100.
+					-- Divisions by powers of two synthesize as wiring shifts and
+					-- avoid the large general-purpose divider used by /100.
+					calculated_mm := (echo_time_us / 8) +
+					                 (echo_time_us / 32) +
+					                 (echo_time_us / 64);
 
 					if calculated_mm >= 20 and calculated_mm <= 4000 then
 						distance_mm <= calculated_mm;
