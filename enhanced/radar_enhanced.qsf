@@ -20,8 +20,7 @@ set_global_assignment -name VHDL_FILE ../rtl/alarm_led_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/buzzer_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/seg_decoder.vhd
 set_global_assignment -name VHDL_FILE ../rtl/lcd_bus_writer.vhd
-set_global_assignment -name VHDL_FILE ../rtl/lcd12864_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_lcd_renderer.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_lcd_radar_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_scan_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_servo_pwm.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_measure_ctrl.vhd

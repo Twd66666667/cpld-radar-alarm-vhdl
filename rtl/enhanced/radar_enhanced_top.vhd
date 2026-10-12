@@ -30,7 +30,6 @@ architecture structural of radar_enhanced_top is
 
     signal system_rst   : std_logic;
     signal tick_1ms_s   : std_logic;
-    signal tick_250ms_s : std_logic;
     signal tick_2s_s    : std_logic;
     signal blink_2hz_s  : std_logic;
 
@@ -73,10 +72,6 @@ architecture structural of radar_enhanced_top is
 
     signal alarm_level_s : integer range 0 to 4;
     signal alarm_distance_valid_s : std_logic;
-
-    signal lcd_render_page_s : integer range 0 to 7;
-    signal lcd_render_col_s  : integer range 0 to 127;
-    signal lcd_pixel_byte_s  : std_logic_vector(7 downto 0);
 
 begin
 
@@ -122,7 +117,7 @@ begin
         clk        => clk,
         rst        => system_rst,
         tick_1ms   => tick_1ms_s,
-        tick_250ms => tick_250ms_s,
+        tick_250ms => open,
         tick_2s    => tick_2s_s,
         blink_2hz  => blink_2hz_s
     );
@@ -266,39 +261,25 @@ begin
         cat            => cat
     );
 
-    u_lcd_radar_renderer : entity work.enhanced_lcd_renderer
+    u_lcd_radar_ctrl : entity work.enhanced_lcd_radar_ctrl
     port map (
-        clk          => clk,
-        rst          => system_rst,
-        self_test_en => self_test_en_s,
-        standby_en   => standby_en_s,
-        run_en       => run_en_s,
-        blink_2hz    => blink_2hz_s,
-        scan_index   => scan_index_s,
-        result_done  => filtered_done_s,
-        distance_mm  => filtered_distance_s,
+        clk            => clk,
+        rst            => system_rst,
+        tick_1ms       => tick_1ms_s,
+        self_test_en   => self_test_en_s,
+        standby_en     => standby_en_s,
+        run_en         => run_en_s,
+        blink_2hz      => blink_2hz_s,
+        scan_index     => scan_index_s,
+        result_done    => filtered_done_s,
+        distance_mm    => filtered_distance_s,
         distance_valid => filtered_valid_s,
-        render_page  => lcd_render_page_s,
-        render_col   => lcd_render_col_s,
-        pixel_byte   => lcd_pixel_byte_s
-    );
-
-    u_lcd12864_ctrl : entity work.lcd12864_ctrl
-    port map (
-        clk         => clk,
-        rst         => system_rst,
-        tick_1ms    => tick_1ms_s,
-        tick_250ms  => tick_250ms_s,
-        pixel_byte  => lcd_pixel_byte_s,
-        render_page => lcd_render_page_s,
-        render_col  => lcd_render_col_s,
-        init_done   => open,
-        lcd_db      => lcd_db,
-        lcd_a0      => lcd_a0,
-        lcd_wr_n    => lcd_wr_n,
-        lcd_rd_n    => lcd_rd_n,
-        lcd_cs_n    => lcd_cs_n,
-        lcd_rst_n   => lcd_rst_n
+        lcd_db         => lcd_db,
+        lcd_a0         => lcd_a0,
+        lcd_wr_n       => lcd_wr_n,
+        lcd_rd_n       => lcd_rd_n,
+        lcd_cs_n       => lcd_cs_n,
+        lcd_rst_n      => lcd_rst_n
     );
 
 end architecture structural;
