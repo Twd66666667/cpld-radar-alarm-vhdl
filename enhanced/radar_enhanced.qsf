@@ -17,7 +17,7 @@ set_global_assignment -name VHDL_FILE ../rtl/distance_calc.vhd
 set_global_assignment -name VHDL_FILE ../rtl/distance_median3.vhd
 set_global_assignment -name VHDL_FILE ../rtl/lcd_bus_writer.vhd
 set_global_assignment -name VHDL_FILE ../rtl/lcd12864_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/lcd_radar_renderer.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_lcd_renderer.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_scan_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_servo_pwm.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_measure_ctrl.vhd

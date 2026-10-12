@@ -170,12 +170,13 @@ begin
         level_180      => level_180_s
     );
 
-    u_lcd_radar_renderer : entity work.lcd_radar_renderer
+    u_lcd_radar_renderer : entity work.enhanced_lcd_renderer
     port map (
         self_test_en => self_test_en_s,
         standby_en   => standby_en_s,
         run_en       => run_en_s,
         blink_2hz    => blink_2hz_s,
+        angle_deg    => angle_deg_s,
         level_0      => level_0_s,
         level_45     => level_45_s,
         level_90     => level_90_s,
