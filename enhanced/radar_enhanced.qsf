@@ -15,6 +15,10 @@ set_global_assignment -name VHDL_FILE ../rtl/system_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/ultrasonic.vhd
 set_global_assignment -name VHDL_FILE ../rtl/distance_calc.vhd
 set_global_assignment -name VHDL_FILE ../rtl/distance_median3.vhd
+set_global_assignment -name VHDL_FILE ../rtl/distance_bcd.vhd
+set_global_assignment -name VHDL_FILE ../rtl/alarm_led_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/buzzer_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/seg_decoder.vhd
 set_global_assignment -name VHDL_FILE ../rtl/lcd_bus_writer.vhd
 set_global_assignment -name VHDL_FILE ../rtl/lcd12864_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_lcd_renderer.vhd
@@ -22,6 +26,8 @@ set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_scan_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_servo_pwm.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_measure_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_direction_levels.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_dot_matrix_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_seg_display_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/radar_enhanced_top.vhd
 
 set_location_assignment PIN_18 -to clk

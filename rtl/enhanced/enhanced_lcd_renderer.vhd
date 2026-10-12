@@ -8,7 +8,7 @@ entity enhanced_lcd_renderer is
         run_en       : in  std_logic;
         blink_2hz    : in  std_logic;
 
-        angle_deg    : in  integer range 0 to 180;
+        scan_index   : in  integer range 0 to 36;
 
         level_0      : in  integer range 0 to 5;
         level_45     : in  integer range 0 to 5;
@@ -47,7 +47,7 @@ begin
         standby_en,
         run_en,
         blink_2hz,
-        angle_deg,
+        scan_index,
         level_0,
         level_45,
         level_90,
@@ -65,49 +65,12 @@ begin
         sweep_x := 118;
         sweep_y := 62;
 
-        -- Convert the 5-degree mechanical angle into a point on the outer
-        -- semicircle.  A lookup table avoids multipliers and trigonometric
-        -- calculations in the CPLD.
-        case angle_deg is
-            when   0 => sweep_x := 118; sweep_y := 62;
-            when   5 => sweep_x := 118; sweep_y := 57;
-            when  10 => sweep_x := 117; sweep_y := 53;
-            when  15 => sweep_x := 116; sweep_y := 48;
-            when  20 => sweep_x := 115; sweep_y := 44;
-            when  25 => sweep_x := 113; sweep_y := 39;
-            when  30 => sweep_x := 111; sweep_y := 35;
-            when  35 => sweep_x := 108; sweep_y := 31;
-            when  40 => sweep_x := 105; sweep_y := 27;
-            when  45 => sweep_x := 102; sweep_y := 24;
-            when  50 => sweep_x :=  99; sweep_y := 21;
-            when  55 => sweep_x :=  95; sweep_y := 18;
-            when  60 => sweep_x :=  91; sweep_y := 15;
-            when  65 => sweep_x :=  87; sweep_y := 13;
-            when  70 => sweep_x :=  82; sweep_y := 11;
-            when  75 => sweep_x :=  78; sweep_y := 10;
-            when  80 => sweep_x :=  73; sweep_y :=  9;
-            when  85 => sweep_x :=  69; sweep_y :=  8;
-            when  90 => sweep_x :=  64; sweep_y :=  8;
-            when  95 => sweep_x :=  59; sweep_y :=  8;
-            when 100 => sweep_x :=  55; sweep_y :=  9;
-            when 105 => sweep_x :=  50; sweep_y := 10;
-            when 110 => sweep_x :=  46; sweep_y := 11;
-            when 115 => sweep_x :=  41; sweep_y := 13;
-            when 120 => sweep_x :=  37; sweep_y := 15;
-            when 125 => sweep_x :=  33; sweep_y := 18;
-            when 130 => sweep_x :=  29; sweep_y := 21;
-            when 135 => sweep_x :=  26; sweep_y := 24;
-            when 140 => sweep_x :=  23; sweep_y := 27;
-            when 145 => sweep_x :=  20; sweep_y := 31;
-            when 150 => sweep_x :=  17; sweep_y := 35;
-            when 155 => sweep_x :=  15; sweep_y := 39;
-            when 160 => sweep_x :=  13; sweep_y := 44;
-            when 165 => sweep_x :=  12; sweep_y := 48;
-            when 170 => sweep_x :=  11; sweep_y := 53;
-            when 175 => sweep_x :=  10; sweep_y := 57;
-            when 180 => sweep_x :=  10; sweep_y := 62;
-            when others => null;
-        end case;
+        -- A moving notch above the angle baseline represents the continuous
+        -- scan.  Mapping the 0..36 index directly to one X coordinate is much
+        -- smaller than storing 37 pairs of semicircle coordinates, leaving
+        -- room for the board's original LED, matrix and seven-segment logic.
+        sweep_x := 118 - scan_index * 3;
+        sweep_y := 58;
 
         if self_test_en = '1' then
             if blink_2hz = '1' then

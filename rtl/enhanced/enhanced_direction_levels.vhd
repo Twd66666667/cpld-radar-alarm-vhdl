@@ -7,7 +7,7 @@ port (
     rst            : in  std_logic;
     run_en         : in  std_logic;
     result_done    : in  std_logic;
-    angle_deg      : in  integer range 0 to 180;
+    scan_index     : in  integer range 0 to 36;
     distance_mm    : in  integer range 0 to 4000;
     distance_valid : in  std_logic;
     level_0        : out integer range 0 to 5;
@@ -55,12 +55,12 @@ begin
             elsif result_done = '1' then
                 new_level := classify_distance(distance_mm, distance_valid);
 
-                case angle_deg is
+                case scan_index is
                     when 0   => level_0   <= new_level;
-                    when 45  => level_45  <= new_level;
-                    when 90  => level_90  <= new_level;
-                    when 135 => level_135 <= new_level;
-                    when 180 => level_180 <= new_level;
+                    when 9   => level_45  <= new_level;
+                    when 18  => level_90  <= new_level;
+                    when 27  => level_135 <= new_level;
+                    when 36  => level_180 <= new_level;
                     when others => null;
                 end case;
             end if;

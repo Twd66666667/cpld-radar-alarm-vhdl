@@ -14,8 +14,8 @@ port (
     seg              : out std_logic_vector(6 downto 0);
     cat              : out std_logic_vector(7 downto 0);
     matrix_row       : out std_logic_vector(7 downto 0);
-    matrix_red_col   : out std_logic_vector(7 downto 0);
-    matrix_green_col : out std_logic_vector(7 downto 0);
+    matrix_red_col   : out std_logic_vector(0 to 7);
+    matrix_green_col : out std_logic_vector(0 to 7);
 
     lcd_db        : out std_logic_vector(7 downto 0);
     lcd_a0        : out std_logic;
@@ -38,7 +38,10 @@ architecture structural of radar_enhanced_top is
     signal standby_en_s   : std_logic;
     signal run_en_s       : std_logic;
 
-    signal angle_deg_s      : integer range 0 to 180;
+    signal scan_index_s     : integer range 0 to 36;
+    signal angle_100_s      : integer range 0 to 1;
+    signal angle_10_s       : integer range 0 to 9;
+    signal angle_1_s        : integer range 0 to 9;
     signal pulse_width_us_s : integer range 450 to 2500;
     signal cycle_start_s    : std_logic;
     signal servo_quiet_s    : std_logic;
@@ -57,6 +60,21 @@ architecture structural of radar_enhanced_top is
     signal filtered_distance_s : integer range 0 to 4000;
     signal filtered_valid_s    : std_logic;
 
+    signal previous_index_s     : integer range 0 to 36 := 0;
+    signal angle_changed_s      : std_logic;
+    signal current_result_ready_s : std_logic := '0';
+
+    signal distance_1000_s : integer range 0 to 9;
+    signal distance_100_s  : integer range 0 to 9;
+    signal distance_10_s   : integer range 0 to 9;
+    signal distance_1_s    : integer range 0 to 9;
+    signal distance_bcd_valid_s : std_logic;
+    signal display_distance_valid_s : std_logic;
+
+    signal led_alarm_s : std_logic_vector(15 downto 0);
+    signal alarm_level_s : integer range 0 to 4;
+    signal alarm_distance_valid_s : std_logic;
+
     signal level_0_s   : integer range 0 to 5;
     signal level_45_s  : integer range 0 to 5;
     signal level_90_s  : integer range 0 to 5;
@@ -72,15 +90,32 @@ begin
     system_rst <= not sw7;
     servo_enable_s <= standby_en_s or (run_en_s and not servo_quiet_s);
 
-    -- The enhanced project uses only the LCD.  Drive every unused display
-    -- interface to its inactive level so no board input is left floating.
-    led              <= (others => '0');
-    buzzer_out       <= '0';
-    seg              <= (others => '1');
-    cat              <= (others => '1');
-    matrix_row       <= (others => '1');
-    matrix_red_col   <= (others => '0');
-    matrix_green_col <= (others => '0');
+    angle_changed_s <= '1'
+        when run_en_s = '1' and scan_index_s /= previous_index_s
+        else '0';
+
+    alarm_distance_valid_s <= filtered_valid_s and current_result_ready_s and
+                              not angle_changed_s;
+    display_distance_valid_s <= distance_bcd_valid_s and
+                                current_result_ready_s and
+                                not angle_changed_s;
+
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if system_rst = '1' or run_en_s = '0' then
+                previous_index_s <= scan_index_s;
+                current_result_ready_s <= '0';
+            else
+                previous_index_s <= scan_index_s;
+                if scan_index_s /= previous_index_s then
+                    current_result_ready_s <= '0';
+                elsif filtered_done_s = '1' then
+                    current_result_ready_s <= filtered_valid_s;
+                end if;
+            end if;
+        end if;
+    end process;
 
     u_timebase : entity work.timebase
     port map (
@@ -108,8 +143,11 @@ begin
         rst            => system_rst,
         run_en         => run_en_s,
         tick_1ms       => tick_1ms_s,
-        angle_deg      => angle_deg_s,
         pulse_width_us => pulse_width_us_s,
+        scan_index     => scan_index_s,
+        angle_100      => angle_100_s,
+        angle_10       => angle_10_s,
+        angle_1        => angle_1_s,
         cycle_start    => cycle_start_s
     );
 
@@ -178,7 +216,7 @@ begin
         rst            => system_rst,
         run_en         => run_en_s,
         result_done    => filtered_done_s,
-        angle_deg      => angle_deg_s,
+        scan_index     => scan_index_s,
         distance_mm    => filtered_distance_s,
         distance_valid => filtered_valid_s,
         level_0        => level_0_s,
@@ -188,13 +226,89 @@ begin
         level_180      => level_180_s
     );
 
+    u_distance_bcd : entity work.distance_bcd
+    port map (
+        clk            => clk,
+        rst            => system_rst,
+        clear          => angle_changed_s,
+        result_done    => filtered_done_s,
+        distance_mm    => filtered_distance_s,
+        distance_valid => filtered_valid_s,
+        digit_1000     => distance_1000_s,
+        digit_100      => distance_100_s,
+        digit_10       => distance_10_s,
+        digit_1        => distance_1_s,
+        bcd_valid      => distance_bcd_valid_s
+    );
+
+    u_dot_matrix_ctrl : entity work.enhanced_dot_matrix_ctrl
+    port map (
+        clk              => clk,
+        rst              => system_rst,
+        tick_1ms         => tick_1ms_s,
+        blink_2hz        => blink_2hz_s,
+        self_test_en     => self_test_en_s,
+        standby_en       => standby_en_s,
+        run_en           => run_en_s,
+        scan_index       => scan_index_s,
+        level_0          => level_0_s,
+        level_45         => level_45_s,
+        level_90         => level_90_s,
+        level_135        => level_135_s,
+        level_180        => level_180_s,
+        matrix_row       => matrix_row,
+        matrix_red_col   => matrix_red_col,
+        matrix_green_col => matrix_green_col
+    );
+
+    u_alarm_led_ctrl : entity work.alarm_led_ctrl
+    port map (
+        run_en         => run_en_s,
+        distance_valid => alarm_distance_valid_s,
+        distance_mm    => filtered_distance_s,
+        blink_2hz      => blink_2hz_s,
+        led_alarm      => led_alarm_s,
+        alarm_level    => alarm_level_s
+    );
+
+    u_buzzer_ctrl : entity work.buzzer_ctrl
+    port map (
+        clk         => clk,
+        rst         => system_rst,
+        run_en      => run_en_s,
+        tick_1ms    => tick_1ms_s,
+        alarm_level => alarm_level_s,
+        buzzer_out  => buzzer_out
+    );
+
+    u_seg_display_ctrl : entity work.enhanced_seg_display_ctrl
+    port map (
+        clk            => clk,
+        rst            => system_rst,
+        tick_1ms       => tick_1ms_s,
+        blink_2hz      => blink_2hz_s,
+        self_test_en   => self_test_en_s,
+        standby_en     => standby_en_s,
+        run_en         => run_en_s,
+        angle_100      => angle_100_s,
+        angle_10       => angle_10_s,
+        angle_1        => angle_1_s,
+        distance_1000  => distance_1000_s,
+        distance_100   => distance_100_s,
+        distance_10    => distance_10_s,
+        distance_1     => distance_1_s,
+        distance_valid => display_distance_valid_s,
+        seg            => seg,
+        cat            => cat
+    );
+
     u_lcd_radar_renderer : entity work.enhanced_lcd_renderer
     port map (
         self_test_en => self_test_en_s,
         standby_en   => standby_en_s,
         run_en       => run_en_s,
         blink_2hz    => blink_2hz_s,
-        angle_deg    => angle_deg_s,
+        scan_index   => scan_index_s,
         level_0      => level_0_s,
         level_45     => level_45_s,
         level_90     => level_90_s,
@@ -222,5 +336,9 @@ begin
         lcd_cs_n    => lcd_cs_n,
         lcd_rst_n   => lcd_rst_n
     );
+
+    led <= (others => blink_2hz_s) when self_test_en_s = '1'
+           else led_alarm_s when run_en_s = '1'
+           else (others => '0');
 
 end architecture structural;
