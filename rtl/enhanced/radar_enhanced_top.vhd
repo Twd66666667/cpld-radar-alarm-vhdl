@@ -71,15 +71,8 @@ architecture structural of radar_enhanced_top is
     signal distance_bcd_valid_s : std_logic;
     signal display_distance_valid_s : std_logic;
 
-    signal led_alarm_s : std_logic_vector(15 downto 0);
     signal alarm_level_s : integer range 0 to 4;
     signal alarm_distance_valid_s : std_logic;
-
-    signal level_0_s   : integer range 0 to 5;
-    signal level_45_s  : integer range 0 to 5;
-    signal level_90_s  : integer range 0 to 5;
-    signal level_135_s : integer range 0 to 5;
-    signal level_180_s : integer range 0 to 5;
 
     signal lcd_render_page_s : integer range 0 to 7;
     signal lcd_render_col_s  : integer range 0 to 127;
@@ -99,6 +92,13 @@ begin
     display_distance_valid_s <= distance_bcd_valid_s and
                                 current_result_ready_s and
                                 not angle_changed_s;
+
+    -- LED and dot matrix are intentionally unused in the enhanced build.
+    -- Fixed inactive levels prevent the physical displays from floating.
+    led              <= (others => '0');
+    matrix_row       <= (others => '1');
+    matrix_red_col   <= (others => '0');
+    matrix_green_col <= (others => '0');
 
     process(clk)
     begin
@@ -210,22 +210,6 @@ begin
         filtered_valid    => filtered_valid_s
     );
 
-    u_direction_levels : entity work.enhanced_direction_levels
-    port map (
-        clk            => clk,
-        rst            => system_rst,
-        run_en         => run_en_s,
-        result_done    => filtered_done_s,
-        scan_index     => scan_index_s,
-        distance_mm    => filtered_distance_s,
-        distance_valid => filtered_valid_s,
-        level_0        => level_0_s,
-        level_45       => level_45_s,
-        level_90       => level_90_s,
-        level_135      => level_135_s,
-        level_180      => level_180_s
-    );
-
     u_distance_bcd : entity work.distance_bcd
     port map (
         clk            => clk,
@@ -241,33 +225,13 @@ begin
         bcd_valid      => distance_bcd_valid_s
     );
 
-    u_dot_matrix_ctrl : entity work.enhanced_dot_matrix_ctrl
-    port map (
-        clk              => clk,
-        rst              => system_rst,
-        tick_1ms         => tick_1ms_s,
-        blink_2hz        => blink_2hz_s,
-        self_test_en     => self_test_en_s,
-        standby_en       => standby_en_s,
-        run_en           => run_en_s,
-        scan_index       => scan_index_s,
-        level_0          => level_0_s,
-        level_45         => level_45_s,
-        level_90         => level_90_s,
-        level_135        => level_135_s,
-        level_180        => level_180_s,
-        matrix_row       => matrix_row,
-        matrix_red_col   => matrix_red_col,
-        matrix_green_col => matrix_green_col
-    );
-
     u_alarm_led_ctrl : entity work.alarm_led_ctrl
     port map (
         run_en         => run_en_s,
         distance_valid => alarm_distance_valid_s,
         distance_mm    => filtered_distance_s,
         blink_2hz      => blink_2hz_s,
-        led_alarm      => led_alarm_s,
+        led_alarm      => open,
         alarm_level    => alarm_level_s
     );
 
@@ -304,16 +268,16 @@ begin
 
     u_lcd_radar_renderer : entity work.enhanced_lcd_renderer
     port map (
+        clk          => clk,
+        rst          => system_rst,
         self_test_en => self_test_en_s,
         standby_en   => standby_en_s,
         run_en       => run_en_s,
         blink_2hz    => blink_2hz_s,
         scan_index   => scan_index_s,
-        level_0      => level_0_s,
-        level_45     => level_45_s,
-        level_90     => level_90_s,
-        level_135    => level_135_s,
-        level_180    => level_180_s,
+        result_done  => filtered_done_s,
+        distance_mm  => filtered_distance_s,
+        distance_valid => filtered_valid_s,
         render_page  => lcd_render_page_s,
         render_col   => lcd_render_col_s,
         pixel_byte   => lcd_pixel_byte_s
@@ -336,9 +300,5 @@ begin
         lcd_cs_n    => lcd_cs_n,
         lcd_rst_n   => lcd_rst_n
     );
-
-    led <= (others => blink_2hz_s) when self_test_en_s = '1'
-           else led_alarm_s when run_en_s = '1'
-           else (others => '0');
 
 end architecture structural;

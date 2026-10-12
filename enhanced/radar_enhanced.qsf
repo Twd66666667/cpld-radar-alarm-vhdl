@@ -25,8 +25,6 @@ set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_lcd_renderer.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_scan_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_servo_pwm.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_measure_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_direction_levels.vhd
-set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_dot_matrix_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_seg_display_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/radar_enhanced_top.vhd
 
