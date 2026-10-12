@@ -1,0 +1,4 @@
+QUARTUS_VERSION = "9.1"
+DATE = "12 October 2026"
+
+PROJECT_REVISION = "radar_enhanced"

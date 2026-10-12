@@ -1,0 +1,47 @@
+set_global_assignment -name FAMILY "MAX II"
+set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name TOP_LEVEL_ENTITY radar_enhanced_top
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.1
+set_global_assignment -name LAST_QUARTUS_VERSION 9.1
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name FMAX_REQUIREMENT "1 MHz" -section_id clk_1mhz
+set_instance_assignment -name CLOCK_SETTINGS clk_1mhz -to clk
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+
+set_global_assignment -name VHDL_FILE ../rtl/timebase.vhd
+set_global_assignment -name VHDL_FILE ../rtl/system_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/ultrasonic.vhd
+set_global_assignment -name VHDL_FILE ../rtl/distance_calc.vhd
+set_global_assignment -name VHDL_FILE ../rtl/distance_median3.vhd
+set_global_assignment -name VHDL_FILE ../rtl/lcd_bus_writer.vhd
+set_global_assignment -name VHDL_FILE ../rtl/lcd12864_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/lcd_radar_renderer.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_scan_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_servo_pwm.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_measure_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_direction_levels.vhd
+set_global_assignment -name VHDL_FILE ../rtl/enhanced/radar_enhanced_top.vhd
+
+set_location_assignment PIN_18 -to clk
+set_location_assignment PIN_125 -to sw7
+set_location_assignment PIN_51 -to servo_pwm_out
+set_location_assignment PIN_94 -to trig_out
+set_location_assignment PIN_95 -to echo_in
+
+set_location_assignment PIN_32 -to lcd_rd_n
+set_location_assignment PIN_37 -to lcd_wr_n
+set_location_assignment PIN_48 -to lcd_a0
+set_location_assignment PIN_109 -to lcd_rst_n
+set_location_assignment PIN_108 -to lcd_cs_n
+set_location_assignment PIN_107 -to lcd_db[7]
+set_location_assignment PIN_106 -to lcd_db[6]
+set_location_assignment PIN_105 -to lcd_db[5]
+set_location_assignment PIN_104 -to lcd_db[4]
+set_location_assignment PIN_103 -to lcd_db[3]
+set_location_assignment PIN_102 -to lcd_db[2]
+set_location_assignment PIN_110 -to lcd_db[1]
+set_location_assignment PIN_101 -to lcd_db[0]
+
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
