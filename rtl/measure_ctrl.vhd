@@ -31,7 +31,7 @@ architecture rtl of measure_ctrl is
     signal current_state : state_type := IDLE_STATE;
     signal sample_count  : integer range 0 to 2 := 0;
     signal settle_count  : integer range 0 to 1 := 0;
-    signal quiet_count_ms : integer range 0 to 49 := 0;
+    signal quiet_count_ms : integer range 0 to 299 := 0;
     signal gap_count_ms  : integer range 0 to 59 := 0;
 
 begin
@@ -81,7 +81,7 @@ begin
                             current_state <= IDLE_STATE;
 
                         elsif tick_1ms = '1' then
-                            if quiet_count_ms = 49 then
+                            if quiet_count_ms = 299 then
                                 quiet_count_ms <= 0;
                                 sample_count <= 0;
                                 current_state <= START_STATE;
@@ -145,12 +145,15 @@ begin
 
     -- Stop servo PWM before and throughout all three ultrasonic samples.
     -- The servo first receives PWM for 500 ms, then the system waits another
-    -- 50 ms after PWM stops so power and ground disturbances can settle.
+    -- 300 ms after PWM stops so the shared 5 V rail and sensor can recover.
+    -- Keep PWM disabled after the samples; it starts again only when the next
+    -- angle enters WAIT_SETTLE_STATE.
     servo_quiet <= '1'
         when current_state = QUIET_WAIT_STATE or
              current_state = START_STATE or
              current_state = WAIT_DONE_STATE or
-             current_state = WAIT_GAP_STATE
+             current_state = WAIT_GAP_STATE or
+             current_state = WAIT_NEXT_STATE
         else '0';
 
 end architecture rtl;

@@ -14,7 +14,7 @@ end entity servo_pwm;
 architecture rtl of servo_pwm is
 
     signal pwm_count : integer range 0 to 19999 := 0;
-    signal pulse_width_us : integer range 500 to 2500 := 500;
+    signal pulse_width_us : integer range 450 to 2500 := 450;
 
 begin
 	process(clk)
@@ -35,12 +35,12 @@ begin
 	end process;
 	
 	with angle_deg select
-    pulse_width_us <= 500  when 0,
-                      1000 when 45,
-                      1500 when 90,
-                      2000 when 135,
-                      2500 when 180,
-                      1500 when others;
+    pulse_width_us <= 480  when 0,
+                      880 when 45,
+                      1380 when 90,
+                      1880 when 135,
+                      2340 when 180,
+                      1380 when others;
                       
     pwm_out <= '1'
 		when rst = '0' and enable = '1' and pwm_count <pulse_width_us 

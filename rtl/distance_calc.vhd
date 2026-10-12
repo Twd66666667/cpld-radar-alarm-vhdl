@@ -18,7 +18,8 @@ architecture rtl of distance_calc is
 begin
 
 	process(clk)
-		variable calculated_mm : integer range 0 to 5200;
+		variable raw_mm        : integer range 0 to 5200;
+		variable calculated_mm : integer range 0 to 5300;
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
@@ -30,9 +31,14 @@ begin
 					-- 11/64 = 0.171875, close to the original 17/100.
 					-- Divisions by powers of two synthesize as wiring shifts and
 					-- avoid the large general-purpose divider used by /100.
-					calculated_mm := (echo_time_us / 8) +
-					                 (echo_time_us / 32) +
-					                 (echo_time_us / 64);
+					raw_mm := (echo_time_us / 8) +
+					          (echo_time_us / 32) +
+					          (echo_time_us / 64);
+
+					-- Measurements at 246, 354, 600 and 1200 mm show an almost
+					-- constant zero offset.  Add 13 mm without introducing a
+					-- general-purpose multiplier or divider.
+					calculated_mm := raw_mm + 13;
 
 					if calculated_mm >= 20 and calculated_mm <= 4000 then
 						distance_mm <= calculated_mm;

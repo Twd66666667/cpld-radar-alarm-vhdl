@@ -117,7 +117,9 @@ architecture rtl of dot_matrix_ctrl is
 				return '1';
 
 			when COLOR_ORANGE =>
-				if phase_value = 0 then
+				-- Red stays fully on while green uses a 50% duty cycle.
+				-- This keeps orange distinct from both pure red and yellow.
+				if phase_value = 0 or phase_value = 1 then
 					return '1';
 				else
 					return '0';
