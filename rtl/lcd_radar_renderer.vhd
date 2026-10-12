@@ -110,30 +110,24 @@ begin
                     end case;
                 end if;
 
-                -- 90-degree markers use fixed page/bit positions.
-                case level_90 is
-                    when 1 =>
-                        if render_page = 1 and render_col = 64 then
-                            pixels := pixels or x"0E";
-                        end if;
-                    when 2 =>
-                        if render_page = 2 and render_col = 64 then
-                            pixels := pixels or x"1C";
-                        end if;
-                    when 3 =>
-                        if render_page = 3 and render_col = 64 then
-                            pixels := pixels or x"38";
-                        end if;
-                    when 4 =>
-                        if render_page = 5 and render_col = 64 then
-                            pixels := pixels or x"07";
-                        end if;
-                    when 5 =>
-                        if render_page = 6 and render_col = 64 then
-                            pixels := pixels or x"0E";
-                        end if;
-                    when others => null;
-                end case;
+                -- The original marker occupied only column 64 and disappeared
+                -- into the vertical scan line.  Share one column-window test
+                -- across all five levels to form a visible 3-pixel-wide dot.
+                if render_col >= 63 and render_col <= 65 then
+                    case level_90 is
+                        when 1 =>
+                            if render_page = 1 then pixels := pixels or x"0E"; end if;
+                        when 2 =>
+                            if render_page = 2 then pixels := pixels or x"1C"; end if;
+                        when 3 =>
+                            if render_page = 3 then pixels := pixels or x"38"; end if;
+                        when 4 =>
+                            if render_page = 5 then pixels := pixels or x"07"; end if;
+                        when 5 =>
+                            if render_page = 6 then pixels := pixels or x"0E"; end if;
+                        when others => null;
+                    end case;
+                end if;
 
                 -- 45-degree markers.
                 case level_45 is
