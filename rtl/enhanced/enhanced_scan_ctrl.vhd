@@ -22,7 +22,7 @@ architecture rtl of enhanced_scan_ctrl is
     signal angle_100_reg : integer range 0 to 1 := 0;
     signal angle_10_reg  : integer range 0 to 9 := 0;
     signal angle_1_reg   : integer range 0 to 9 := 0;
-    signal period_count : integer range 0 to 399 := 0;
+    signal period_count : integer range 0 to 649 := 0;
     signal direction_up : std_logic := '1';
     signal run_en_d     : std_logic := '0';
 
@@ -59,7 +59,7 @@ begin
                     cycle_start  <= '1';
 
                 elsif tick_1ms = '1' then
-                    if period_count = 399 then
+                    if period_count = 649 then
                         period_count <= 0;
                         cycle_start  <= '1';
 

@@ -16,8 +16,6 @@ set_global_assignment -name VHDL_FILE ../rtl/ultrasonic.vhd
 set_global_assignment -name VHDL_FILE ../rtl/distance_calc.vhd
 set_global_assignment -name VHDL_FILE ../rtl/distance_median3.vhd
 set_global_assignment -name VHDL_FILE ../rtl/distance_bcd.vhd
-set_global_assignment -name VHDL_FILE ../rtl/alarm_led_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/buzzer_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/seg_decoder.vhd
 set_global_assignment -name VHDL_FILE ../rtl/lcd_bus_writer.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_lcd_radar_ctrl.vhd

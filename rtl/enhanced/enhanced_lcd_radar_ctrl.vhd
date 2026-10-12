@@ -39,7 +39,10 @@ architecture rtl of enhanced_lcd_radar_ctrl is
         FRAME_COL_LOW_STATE,
         FRAME_COL_LOW_WAIT_STATE,
         FRAME_PREP_STATE,
-        FRAME_BACKGROUND_STATE,
+        FRAME_BG_INIT_STATE,
+        FRAME_BG_SQUARE_X_STATE,
+        FRAME_BG_SQUARE_Y_STATE,
+        FRAME_BG_CHECK_STATE,
         FRAME_DATA_STATE,
         FRAME_DATA_WAIT_STATE,
         FRAME_DONE_STATE,
@@ -91,6 +94,9 @@ architecture rtl of enhanced_lcd_radar_ctrl is
     signal frame_col  : integer range 0 to 127 := 0;
     signal bg_bit     : integer range 0 to 7 := 0;
     signal frame_byte : std_logic_vector(7 downto 0) := (others => '0');
+    signal square_count : integer range 0 to 64 := 0;
+    signal square_odd   : integer range 1 to 129 := 1;
+    signal square_sum   : integer range 0 to 8192 := 0;
 
     signal quantize_remaining : integer range 0 to 799 := 0;
     signal quantize_level     : integer range 0 to 39 := 0;
@@ -190,9 +196,6 @@ begin
         variable pixel_y      : integer range 0 to 63;
         variable dx           : integer range 0 to 64;
         variable dy           : integer range 0 to 62;
-        variable major_value  : integer range 0 to 64;
-        variable minor_value  : integer range 0 to 64;
-        variable approx_range : integer range 0 to 96;
         variable level_value  : integer range 1 to 40;
         variable delta_x      : integer range 0 to 60;
         variable delta_y      : integer range 0 to 60;
@@ -220,6 +223,9 @@ begin
                 frame_col           <= 0;
                 bg_bit              <= 0;
                 frame_byte          <= (others => '0');
+                square_count        <= 0;
+                square_odd          <= 1;
+                square_sum          <= 0;
                 quantize_remaining  <= 0;
                 quantize_level      <= 0;
                 point_radius        <= 1;
@@ -367,44 +373,68 @@ begin
                         if frame_background = '1' then
                             frame_byte   <= (others => '0');
                             bg_bit       <= 0;
-                            current_state <= FRAME_BACKGROUND_STATE;
+                            current_state <= FRAME_BG_INIT_STATE;
                         else
                             frame_byte   <= (others => frame_fill);
                             current_state <= FRAME_DATA_STATE;
                         end if;
 
-                    when FRAME_BACKGROUND_STATE =>
-                        pixel_y := frame_page * 8 + bg_bit;
+                    when FRAME_BG_INIT_STATE =>
+                        square_count <= 0;
+                        square_odd   <= 1;
+                        square_sum   <= 0;
+                        current_state <= FRAME_BG_SQUARE_X_STATE;
 
+                    when FRAME_BG_SQUARE_X_STATE =>
                         if frame_col >= 64 then
                             dx := frame_col - 64;
                         else
                             dx := 64 - frame_col;
                         end if;
 
+                        if square_count < dx then
+                            square_sum   <= square_sum + square_odd;
+                            square_count <= square_count + 1;
+                            square_odd   <= square_odd + 2;
+                        else
+                            square_count <= 0;
+                            square_odd   <= 1;
+                            current_state <= FRAME_BG_SQUARE_Y_STATE;
+                        end if;
+
+                    when FRAME_BG_SQUARE_Y_STATE =>
+                        pixel_y := frame_page * 8 + bg_bit;
                         if pixel_y <= 62 then
                             dy := 62 - pixel_y;
-                            if dx >= dy then
-                                major_value := dx;
-                                minor_value := dy;
+                            if square_count < dy then
+                                square_sum   <= square_sum + square_odd;
+                                square_count <= square_count + 1;
+                                square_odd   <= square_odd + 2;
                             else
-                                major_value := dy;
-                                minor_value := dx;
+                                current_state <= FRAME_BG_CHECK_STATE;
                             end if;
+                        else
+                            current_state <= FRAME_BG_CHECK_STATE;
+                        end if;
 
-                            approx_range := major_value + minor_value / 2 - minor_value / 8;
+                    when FRAME_BG_CHECK_STATE =>
+                        pixel_y := frame_page * 8 + bg_bit;
 
-                            if (pixel_y = 62 and frame_col >= 4 and frame_col <= 124) or
-                               approx_range = 15 or approx_range = 30 or
-                               approx_range = 45 or approx_range = 60 then
-                                frame_byte(bg_bit) <= '1';
-                            end if;
+                        -- A tolerance of one radius unit produces a continuous
+                        -- one-pixel circle after the integer pixel rounding.
+                        if (pixel_y = 62 and frame_col >= 4 and frame_col <= 124) or
+                           (square_sum >= 210  and square_sum <= 240) or
+                           (square_sum >= 870  and square_sum <= 930) or
+                           (square_sum >= 1980 and square_sum <= 2070) or
+                           (square_sum >= 3540 and square_sum <= 3660) then
+                            frame_byte(bg_bit) <= '1';
                         end if;
 
                         if bg_bit = 7 then
                             current_state <= FRAME_DATA_STATE;
                         else
-                            bg_bit <= bg_bit + 1;
+                            bg_bit        <= bg_bit + 1;
+                            current_state <= FRAME_BG_INIT_STATE;
                         end if;
 
                     when FRAME_DATA_STATE =>

@@ -70,9 +70,6 @@ architecture structural of radar_enhanced_top is
     signal distance_bcd_valid_s : std_logic;
     signal display_distance_valid_s : std_logic;
 
-    signal alarm_level_s : integer range 0 to 4;
-    signal alarm_distance_valid_s : std_logic;
-
 begin
 
     system_rst <= not sw7;
@@ -82,8 +79,6 @@ begin
         when run_en_s = '1' and scan_index_s /= previous_index_s
         else '0';
 
-    alarm_distance_valid_s <= filtered_valid_s and current_result_ready_s and
-                              not angle_changed_s;
     display_distance_valid_s <= distance_bcd_valid_s and
                                 current_result_ready_s and
                                 not angle_changed_s;
@@ -94,6 +89,7 @@ begin
     matrix_row       <= (others => '1');
     matrix_red_col   <= (others => '0');
     matrix_green_col <= (others => '0');
+    buzzer_out       <= '0';
 
     process(clk)
     begin
@@ -218,26 +214,6 @@ begin
         digit_10       => distance_10_s,
         digit_1        => distance_1_s,
         bcd_valid      => distance_bcd_valid_s
-    );
-
-    u_alarm_led_ctrl : entity work.alarm_led_ctrl
-    port map (
-        run_en         => run_en_s,
-        distance_valid => alarm_distance_valid_s,
-        distance_mm    => filtered_distance_s,
-        blink_2hz      => blink_2hz_s,
-        led_alarm      => open,
-        alarm_level    => alarm_level_s
-    );
-
-    u_buzzer_ctrl : entity work.buzzer_ctrl
-    port map (
-        clk         => clk,
-        rst         => system_rst,
-        run_en      => run_en_s,
-        tick_1ms    => tick_1ms_s,
-        alarm_level => alarm_level_s,
-        buzzer_out  => buzzer_out
     );
 
     u_seg_display_ctrl : entity work.enhanced_seg_display_ctrl
