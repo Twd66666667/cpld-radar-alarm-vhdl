@@ -9,6 +9,14 @@ port (
     echo_in       : in  std_logic;
     trig_out      : out std_logic;
 
+    led              : out std_logic_vector(15 downto 0);
+    buzzer_out       : out std_logic;
+    seg              : out std_logic_vector(6 downto 0);
+    cat              : out std_logic_vector(7 downto 0);
+    matrix_row       : out std_logic_vector(7 downto 0);
+    matrix_red_col   : out std_logic_vector(7 downto 0);
+    matrix_green_col : out std_logic_vector(7 downto 0);
+
     lcd_db        : out std_logic_vector(7 downto 0);
     lcd_a0        : out std_logic;
     lcd_wr_n      : out std_logic;
@@ -63,6 +71,16 @@ begin
 
     system_rst <= not sw7;
     servo_enable_s <= standby_en_s or (run_en_s and not servo_quiet_s);
+
+    -- The enhanced project uses only the LCD.  Drive every unused display
+    -- interface to its inactive level so no board input is left floating.
+    led              <= (others => '0');
+    buzzer_out       <= '0';
+    seg              <= (others => '1');
+    cat              <= (others => '1');
+    matrix_row       <= (others => '1');
+    matrix_red_col   <= (others => '0');
+    matrix_green_col <= (others => '0');
 
     u_timebase : entity work.timebase
     port map (
