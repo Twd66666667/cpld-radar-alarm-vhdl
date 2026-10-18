@@ -1,0 +1,3 @@
+QUARTUS_VERSION = "9.1"
+DATE = "2026.10.18"
+PROJECT_REVISION = "tracking_servo_sim"

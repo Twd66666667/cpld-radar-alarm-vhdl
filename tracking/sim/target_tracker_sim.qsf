@@ -1,0 +1,13 @@
+set_global_assignment -name FAMILY "MAX II"
+set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name TOP_LEVEL_ENTITY target_tracker_ctrl
+set_global_assignment -name VHDL_FILE ../../rtl/tracking/target_tracker_ctrl.vhd
+set_global_assignment -name SIMULATION_MODE FUNCTIONAL
+set_global_assignment -name VECTOR_WAVEFORM_FILE target_tracker_lock.vwf
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+
+set_global_assignment -name LAST_QUARTUS_VERSION 9.1
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
+set_global_assignment -name VECTOR_OUTPUT_FORMAT VWF
+set_global_assignment -name SIM_OVERWRITE_WAVEFORM_INPUTS OFF
+set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE target_tracker_edge.vwf

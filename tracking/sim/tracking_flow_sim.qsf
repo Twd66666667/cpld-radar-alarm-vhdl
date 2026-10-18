@@ -1,0 +1,14 @@
+set_global_assignment -name FAMILY "MAX II"
+set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name TOP_LEVEL_ENTITY tracking_flow_probe
+set_global_assignment -name VHDL_FILE ../../rtl/tracking/target_tracker_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/enhanced/enhanced_measure_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/distance_median3.vhd
+set_global_assignment -name VHDL_FILE tracking_flow_probe.vhd
+set_global_assignment -name SIMULATION_MODE FUNCTIONAL
+set_global_assignment -name VECTOR_WAVEFORM_FILE tracking_flow.vwf
+
+set_global_assignment -name LAST_QUARTUS_VERSION 9.1
+set_global_assignment -name VECTOR_OUTPUT_FORMAT VWF
+set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE tracking_flow.vwf
+set_global_assignment -name SIM_OVERWRITE_WAVEFORM_INPUTS OFF
