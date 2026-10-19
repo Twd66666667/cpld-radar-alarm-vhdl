@@ -1,0 +1,13 @@
+set_global_assignment -name FAMILY "MAX II"
+set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name TOP_LEVEL_ENTITY lcd_renderer_vwf_top
+set_global_assignment -name VHDL_FILE ../../rtl/lcd_radar_renderer.vhd
+set_global_assignment -name VHDL_FILE ../rtl/lcd_renderer_vwf_top.vhd
+set_global_assignment -name VECTOR_WAVEFORM_FILE lcd_renderer.vwf
+set_global_assignment -name SIMULATION_MODE FUNCTIONAL
+set_global_assignment -name VECTOR_OUTPUT_FORMAT VWF
+set_global_assignment -name SIM_OVERWRITE_WAVEFORM_INPUTS ON
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_1993
+
+set_global_assignment -name LAST_QUARTUS_VERSION 9.1
+set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE lcd_renderer.vwf

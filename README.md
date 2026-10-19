@@ -29,7 +29,7 @@ SW7 打开后，系统先进行 2 秒自检，再进入 2 秒待机，随后开�
 0° -> 45° -> 90° -> 135° -> 180° -> 135° -> 90° -> 45°
 ```
 
-每个角度保持约 2 秒。舵机先接收 500 ms PWM，到达目标位置后关闭 PWM，再等待 50 ms，使电源和地线扰动减小。随后超声波连续测量 3 次，相邻两次间隔 60 ms。
+每个角度保持约 2 秒。舵机先接收 500 ms PWM，到达目标位置后关闭 PWM，再等待 300 ms，使电源和地线扰动减小。随后超声波连续测量 3 次，相邻两次间隔 60 ms。
 
 三次结果全部有效时取中值，两次有效时取平均值；少于两次有效时，本轮结果判为无效。角度切换后，旧距离不会继续驱动当前角度的数码管、LED和蜂鸣器，只有当前角度的新测量完成后才恢复显示和报警。
 
@@ -74,6 +74,15 @@ tb/
   ultrasonic.vwf         超声波模块仿真
   measure_ctrl.vwf       静默期和三次测量调度仿真
 
+simulation/
+  README.md              新增分层仿真的结果与查看方法
+  median3/               三点中值及无效样本处理
+  basic_flow/            基础版主流程联合仿真
+  enhanced_scan/         提高版5°往返扫描
+  lcd_writer/            LCD单字节总线时序
+  lcd_renderer/          基础版关键坐标像素生成
+  enhanced_lcd/          提高版整帧与目标点写入
+
 docs/
   hardware_test_log.md   实物测试现象与整改记录
   images/                仿真截图
@@ -101,6 +110,18 @@ radar.qsf                器件、引脚、时钟和源文件设置
 ![HC-SR04正常回波仿真](docs/images/ultrasonic_normal_simulation.png)
 
 ![HC-SR04三种场景仿真](docs/images/ultrasonic_three_cases_simulation.png)
+
+### 新增分层仿真
+
+三点滤波、基础版主流程、提高版5°扫描、LCD总线、基础版像素生成和提高版真实LCD控制器均已使用独立VWF工程完成仿真。基础版主流程在一张波形中验证了状态启动、舵机静默、三次测距、距离滤波和声光报警的完整触发关系；提高版LCD仿真验证了初始化、整帧雷达背景以及90°目标点的页列地址和像素数据。
+
+各 VWF 的路径、压缩节拍说明和预期数值见 [VWF分层仿真说明](simulation/README.md)。
+
+![基础版主流程联合仿真](docs/images/basic_flow_vwf_result.png)
+
+![提高版5度往返扫描仿真](docs/images/enhanced_scan_vwf_result.png)
+
+![提高版LCD初始化、整帧与目标点仿真](docs/images/enhanced_lcd_vwf_result.png)
 
 ## 工程状态
 

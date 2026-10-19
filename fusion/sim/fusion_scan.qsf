@@ -1,0 +1,10 @@
+set_global_assignment -name FAMILY "MAX II"
+set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name TOP_LEVEL_ENTITY fusion_scan_vwf_top
+set_global_assignment -name VHDL_FILE ../../rtl/fusion/fusion_scan_ctrl.vhd
+set_global_assignment -name VHDL_FILE fusion_scan_vwf_top.vhd
+set_global_assignment -name VECTOR_WAVEFORM_FILE fusion_scan.vwf
+set_global_assignment -name SIMULATION_MODE FUNCTIONAL
+set_global_assignment -name VECTOR_OUTPUT_FORMAT VWF
+set_global_assignment -name SIM_OVERWRITE_WAVEFORM_INPUTS ON
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_1993

@@ -2,7 +2,8 @@
 db/
 incremental_db/
 output_files/
-simulation/
+# Versioned VWF projects live in simulation/.  Their generated db/, reports
+# and programming outputs are still covered by the rules below.
 
 # Quartus generated reports and programming files
 *.rpt

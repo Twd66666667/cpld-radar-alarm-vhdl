@@ -1,0 +1,3 @@
+QUARTUS_VERSION = "9.1"
+DATE = "12:40:00  October 18, 2026"
+PROJECT_REVISION = "lcd_renderer_sim"

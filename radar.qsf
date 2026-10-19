@@ -136,7 +136,6 @@ set_global_assignment -name MISC_FILE "C:/TD/digital elc2/radar.dpf"
 set_global_assignment -name VHDL_FILE rtl/distance_median3.vhd
 
 set_global_assignment -name VECTOR_WAVEFORM_FILE tb/measure_ctrl.vwf
-set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE tb/measure_ctrl.vwf
 set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
 set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
 
@@ -160,3 +159,5 @@ set_location_assignment PIN_103 -to lcd_db[3]
 set_location_assignment PIN_102 -to lcd_db[2]
 set_location_assignment PIN_110 -to lcd_db[1]
 set_location_assignment PIN_101 -to lcd_db[0]
+
+set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE simulation/basic_flow/basic_flow.vwf

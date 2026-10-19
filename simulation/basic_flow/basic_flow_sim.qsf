@@ -1,0 +1,23 @@
+set_global_assignment -name FAMILY "MAX II"
+set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name TOP_LEVEL_ENTITY basic_flow_vwf_top
+set_global_assignment -name VHDL_FILE ../../rtl/system_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/scan_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/servo_pwm.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/measure_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/ultrasonic.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/distance_calc.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/distance_median3.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/alarm_led_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/buzzer_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/basic_flow_vwf_top.vhd
+set_global_assignment -name VECTOR_WAVEFORM_FILE basic_flow.vwf
+set_global_assignment -name SIMULATION_MODE FUNCTIONAL
+set_global_assignment -name VECTOR_OUTPUT_FORMAT VWF
+set_global_assignment -name SIM_OVERWRITE_WAVEFORM_INPUTS ON
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_1993
+
+set_global_assignment -name LAST_QUARTUS_VERSION 9.1
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE basic_flow.vwf
