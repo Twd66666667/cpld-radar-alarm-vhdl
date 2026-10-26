@@ -1,5 +1,6 @@
 set_global_assignment -name FAMILY "MAX II"
 set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name MAXII_OPTIMIZATION_TECHNIQUE AREA
 set_global_assignment -name TOP_LEVEL_ENTITY radar_fusion_tracking_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.1
 set_global_assignment -name LAST_QUARTUS_VERSION 9.1
@@ -10,23 +11,22 @@ set_global_assignment -name FMAX_REQUIREMENT "1 MHz" -section_id clk_1mhz
 set_instance_assignment -name CLOCK_SETTINGS clk_1mhz -to clk
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
 
-set_global_assignment -name VHDL_FILE ../rtl/timebase.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/compact_timebase.vhd
 set_global_assignment -name VHDL_FILE ../rtl/system_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/ultrasonic.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/compact_ultrasonic.vhd
 set_global_assignment -name VHDL_FILE ../rtl/distance_calc.vhd
-set_global_assignment -name VHDL_FILE ../rtl/distance_median3.vhd
-set_global_assignment -name VHDL_FILE ../rtl/fusion/fusion_distance_bcd.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/streaming_median3.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/compact_distance_bcd.vhd
 set_global_assignment -name VHDL_FILE ../rtl/seg_decoder.vhd
 set_global_assignment -name VHDL_FILE ../rtl/lcd_bus_writer.vhd
 set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/compact_lcd_radar_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/shared_scan_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/tracking/target_tracker_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/fusion_tracking_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/tracking/tracking_servo_map.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_servo_pwm.vhd
 set_global_assignment -name VHDL_FILE ../rtl/enhanced/enhanced_seg_display_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../rtl/fusion/fusion_measure_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/compact_measure_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/fusion/fusion_alarm.vhd
-set_global_assignment -name VHDL_FILE ../rtl/buzzer_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/compact_buzzer_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../rtl/fusion/fusion_levels.vhd
 set_global_assignment -name VHDL_FILE ../rtl/fusion/fusion_matrix.vhd
 set_global_assignment -name VHDL_FILE ../rtl/fusion_tracking/radar_fusion_tracking_top.vhd

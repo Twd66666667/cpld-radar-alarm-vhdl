@@ -28,8 +28,9 @@ end entity;
 
 architecture structural of radar_fusion_tracking_top is
     signal system_rst, tick_1ms_s, tick_2s_s, blink_2hz_s : std_logic;
+    signal tone_2khz_s : std_logic;
     signal self_test_s, standby_s, run_s : std_logic;
-    signal basic_run_s, enhanced_run_s, normal_run_s, tracking_run_s : std_logic;
+    signal basic_run_s, enhanced_run_s : std_logic;
     signal sw_meta, sw_sync, mode_reg : std_logic := '0';
     signal sw5_meta, sw5_sync, track_reg, tracking_active : std_logic := '0';
     signal mode_stable_ms : integer range 0 to 19 := 0;
@@ -37,13 +38,10 @@ architecture structural of radar_fusion_tracking_top is
 
     signal basic_angle : integer range 0 to 180;
     signal scan_index : integer range 0 to 36;
-    signal normal_index, tracking_index : integer range 0 to 36;
-    signal index_last : integer range 0 to 36 := 0;
     signal angle_100 : integer range 0 to 1;
     signal angle_10, angle_1 : integer range 0 to 9;
     signal pwm_width : integer range 450 to 2500;
     signal cycle_start : std_logic;
-    signal normal_cycle, tracking_cycle : std_logic;
     signal ultra_start_s, servo_quiet, servo_enable : std_logic;
     signal angle_changed, result_ready : std_logic := '0';
     signal ultra_busy, ultra_done, ultra_valid : std_logic;
@@ -98,20 +96,14 @@ begin
     basic_run_s <= run_s and not mode_reg;
     enhanced_run_s <= run_s and mode_reg;
     tracking_active <= mode_reg and track_reg;
-    normal_run_s <= run_s and not tracking_active;
-    tracking_run_s <= run_s and tracking_active;
-    scan_index <= tracking_index when tracking_active = '1' else normal_index;
-    cycle_start <= tracking_cycle when tracking_active = '1' else normal_cycle;
     servo_enable <= standby_s or (run_s and not servo_quiet);
 
-    angle_changed <= '1' when run_s = '1' and scan_index /= index_last else '0';
     shown_valid <= bcd_valid and result_ready and not angle_changed;
     alarm_valid <= filtered_valid and result_ready and not angle_changed;
 
     process(clk)
     begin
         if rising_edge(clk) then
-            index_last <= scan_index;
             if system_rst = '1' or run_s = '0' then
                 result_ready <= '0';
             elsif angle_changed = '1' then
@@ -122,26 +114,23 @@ begin
         end if;
     end process;
 
-    u_timebase : entity work.timebase port map (
+    u_timebase : entity work.compact_timebase port map (
         clk => clk, rst => system_rst, tick_1ms => tick_1ms_s,
         tick_250ms => open, tick_2s => tick_2s_s,
-        blink_2hz => blink_2hz_s);
+        blink_2hz => blink_2hz_s, tone_2khz => tone_2khz_s);
     u_system : entity work.system_ctrl port map (
         clk => clk, rst => system_rst, tick_2s => tick_2s_s,
         self_test_en => self_test_s, standby_en => standby_s, run_en => run_s);
-    u_scan : entity work.shared_scan_ctrl port map (
-        clk => clk, rst => system_rst, run_en => normal_run_s,
-        enhanced_mode => mode_reg, tick_1ms => tick_1ms_s,
-        tick_2s => tick_2s_s,
-        scan_index => normal_index, basic_angle_deg => basic_angle,
-        cycle_start => normal_cycle);
-    u_tracker : entity work.target_tracker_ctrl port map (
-        clk => clk, rst => system_rst, run_en => tracking_run_s,
+    u_scan : entity work.fusion_tracking_ctrl port map (
+        clk => clk, rst => system_rst, run_en => run_s,
+        enhanced_mode => mode_reg, tracking_mode => tracking_active,
+        tick_2s => tick_2s_s, basic_angle_deg => basic_angle,
+        angle_changed => angle_changed,
         tick_1ms => tick_1ms_s, result_done => result_done,
         result_valid => filtered_valid, distance_mm => filtered_mm,
-        scan_index => tracking_index, target_index => open,
+        scan_index => scan_index, target_index => open,
         target_valid => open, mode_code => open,
-        cycle_start => tracking_cycle);
+        cycle_start => cycle_start);
     u_servo_map : entity work.tracking_servo_map port map (
         scan_index => scan_index, pulse_width_us => pwm_width,
         angle_100 => angle_100, angle_10 => angle_10,
@@ -149,13 +138,13 @@ begin
     u_servo : entity work.enhanced_servo_pwm port map (
         clk => clk, rst => system_rst, enable => servo_enable,
         pulse_width_us => pwm_width, pwm_out => servo_pwm_out);
-    u_measure : entity work.fusion_measure_ctrl port map (
+    u_measure : entity work.compact_measure_ctrl port map (
         clk => clk, rst => system_rst, run_en => run_s,
         enhanced_mode => mode_reg, tick_1ms => tick_1ms_s,
         cycle_start => cycle_start, ultra_busy => ultra_busy,
         ultra_done => ultra_done, ultra_start => ultra_start_s,
         servo_quiet => servo_quiet);
-    u_ultrasonic : entity work.ultrasonic port map (
+    u_ultrasonic : entity work.compact_ultrasonic port map (
         clk => clk, rst => system_rst, start => ultra_start_s,
         echo_in => echo_in, trig_out => trig_out, busy => ultra_busy,
         done => ultra_done, valid => ultra_valid, echo_time_us => echo_us);
@@ -163,12 +152,12 @@ begin
         clk => clk, rst => system_rst, done => ultra_done,
         valid => ultra_valid, echo_time_us => echo_us,
         distance_mm => distance_mm, distance_valid => distance_valid);
-    u_filter : entity work.distance_median3 port map (
+    u_filter : entity work.streaming_median3 port map (
         clk => clk, rst => system_rst, run_en => run_s,
         sample_done => ultra_done, sample_distance => distance_mm,
         sample_valid => distance_valid, result_done => result_done,
         filtered_distance => filtered_mm, filtered_valid => filtered_valid);
-    u_bcd : entity work.fusion_distance_bcd port map (
+    u_bcd : entity work.compact_distance_bcd port map (
         clk => clk, rst => system_rst, clear => angle_changed,
         result_done => result_done, distance_mm => filtered_mm,
         distance_valid => filtered_valid, digit_1000 => d1000,
@@ -205,9 +194,10 @@ begin
         run_en => run_s, distance_valid => alarm_valid,
         level => current_level, blink_2hz => blink_2hz_s,
         led_alarm => alarm_led, alarm_level => alarm_level);
-    u_buzzer : entity work.buzzer_ctrl port map (
+    u_buzzer : entity work.compact_buzzer_ctrl port map (
         clk => clk, rst => system_rst, run_en => basic_run_s,
         tick_1ms => tick_1ms_s, alarm_level => alarm_level,
+        tone_2khz => tone_2khz_s,
         buzzer_out => basic_buzzer);
     u_lcd : entity work.compact_lcd_radar_ctrl port map (
         clk => clk, rst => system_rst, tick_1ms => tick_1ms_s,

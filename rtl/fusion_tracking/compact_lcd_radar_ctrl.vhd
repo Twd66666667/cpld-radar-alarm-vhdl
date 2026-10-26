@@ -17,7 +17,7 @@ end entity;
 
 architecture rtl of compact_lcd_radar_ctrl is
     type state_type is (RESET_LOW, RESET_WAIT, INIT, IDLE,
-                        FRAME, SCALE_POINT, PREP_POINT, POINT);
+                        FRAME, SCALE_X, STORE_X, SCALE_Y, PREP_POINT, POINT);
     type command_array is array (0 to 11) of std_logic_vector(7 downto 0);
     constant INIT_COMMANDS : command_array :=
         (x"AE", x"A0", x"C8", x"A2", x"2F", x"24",
@@ -38,54 +38,34 @@ architecture rtl of compact_lcd_radar_ctrl is
     signal drawn_blink : std_logic := '0';
     signal point_after_frame : std_logic := '0';
     signal event_pending, event_valid : std_logic := '0';
-    signal event_index : integer range 0 to 36 := 0;
-    signal scale_left : integer range 0 to 7 := 0;
-    signal sum_x, sum_y : integer range 0 to 480 := 0;
+    signal acute_index : integer range 0 to 18 := 0;
+    signal event_left, event_zero : std_logic := '0';
+    signal scale_left, scale_total : integer range 0 to 7 := 0;
+    signal coord_sum : integer range 0 to 480 := 0;
     signal point_page : integer range 0 to 7 := 0;
     signal point_base_col : integer range 0 to 125 := 0;
     signal point_col : integer range 0 to 2 := 0;
     signal point_data : std_logic_vector(7 downto 0) := (others => '0');
 
-    function direction_x(i : integer) return integer is
+    -- cos at 5-degree intervals. The Y pass uses cos(90-angle), so
+    -- both coordinates share the same lookup, adder and accumulator.
+    function direction_value(i : integer) return integer is
     begin
         case i is
-            when 0 | 1 | 2 | 3 | 33 | 34 | 35 | 36 => return 60;
-            when 4 | 32 => return 60;
-            when 5 | 31 => return 58;
-            when 6 | 30 => return 55;
-            when 7 | 29 => return 52;
-            when 8 | 28 => return 49;
-            when 9 | 27 => return 45;
-            when 10 | 26 => return 41;
-            when 11 | 25 => return 37;
-            when 12 | 24 => return 32;
-            when 13 | 23 => return 27;
-            when 14 | 22 => return 22;
-            when 15 | 21 => return 17;
-            when 16 | 20 => return 11;
-            when 17 | 19 => return 6;
-            when others => return 0;
-        end case;
-    end function;
-
-    function direction_y(i : integer) return integer is
-    begin
-        case i is
-            when 0 | 36 => return 0;
-            when 1 | 35 => return 6;
-            when 2 | 34 => return 11;
-            when 3 | 33 => return 17;
-            when 4 | 32 => return 22;
-            when 5 | 31 => return 27;
-            when 6 | 30 => return 32;
-            when 7 | 29 => return 37;
-            when 8 | 28 => return 41;
-            when 9 | 27 => return 45;
-            when 10 | 26 => return 49;
-            when 11 | 25 => return 52;
-            when 12 | 24 => return 55;
-            when 13 | 23 => return 58;
-            when 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 => return 60;
+            when 0 | 1 | 2 | 3 | 4 => return 60;
+            when 5 => return 58;
+            when 6 => return 55;
+            when 7 => return 52;
+            when 8 => return 49;
+            when 9 => return 45;
+            when 10 => return 41;
+            when 11 => return 37;
+            when 12 => return 32;
+            when 13 => return 27;
+            when 14 => return 22;
+            when 15 => return 17;
+            when 16 => return 11;
+            when 17 => return 6;
             when others => return 0;
         end case;
     end function;
@@ -211,33 +191,28 @@ begin
                 phase <= 0;
                 waiting <= '0';
                 writer_start <= '0';
-                frame_page <= 0;
-                frame_col <= 0;
-                frame_background <= '1';
-                frame_fill <= '0';
                 drawn_mode <= 0;
                 drawn_blink <= '0';
                 point_after_frame <= '0';
                 event_pending <= '0';
-                event_valid <= '0';
-                event_index <= 0;
-                scale_left <= 0;
-                sum_x <= 0;
-                sum_y <= 0;
-                point_page <= 0;
-                point_base_col <= 0;
-                point_col <= 0;
-                point_data <= (others => '0');
             else
                 writer_start <= '0';
                 if result_done = '1' and run_en = '1' then
                     event_pending <= '1';
-                    event_index <= scan_index;
+                    if scan_index <= 18 then
+                        acute_index <= scan_index;
+                        event_left <= '0';
+                    else
+                        acute_index <= 36 - scan_index;
+                        event_left <= '1';
+                    end if;
+                    event_zero <= '0';
+                    if scan_index = 0 then event_zero <= '1'; end if;
                     event_valid <= distance_valid;
                     if distance_thousands /= 0 or distance_hundreds >= 7 then
-                        scale_left <= 7;
+                        scale_total <= 7;
                     else
-                        scale_left <= distance_hundreds;
+                        scale_total <= distance_hundreds;
                     end if;
                 end if;
 
@@ -255,7 +230,15 @@ begin
                         elsif writer_done = '1' then
                             waiting <= '0';
                             if state = INIT then
-                                if init_index = 11 then state <= IDLE;
+                                if init_index = 11 then
+                                    -- LCD reset need not clear its display RAM.
+                                    -- Always write a blank frame before any mode.
+                                    frame_page <= 0;
+                                    frame_col <= 0;
+                                    frame_background <= '0';
+                                    frame_fill <= '0';
+                                    phase <= 0;
+                                    state <= FRAME;
                                 else init_index <= init_index + 1;
                                 end if;
                             elsif state = FRAME then
@@ -266,14 +249,12 @@ begin
                                     frame_col <= 0;
                                     phase <= 0;
                                 else
-                                    drawn_mode <= desired_mode;
-                                    drawn_blink <= frame_fill;
                                     if point_after_frame = '1' then
                                         point_after_frame <= '0';
                                         if event_valid = '1' then
-                                            sum_x <= 0;
-                                            sum_y <= 0;
-                                            state <= SCALE_POINT;
+                                            coord_sum <= 0;
+                                            scale_left <= scale_total;
+                                            state <= SCALE_X;
                                         else state <= IDLE;
                                         end if;
                                     else state <= IDLE;
@@ -289,6 +270,10 @@ begin
                     when IDLE =>
                         if desired_mode /= drawn_mode or
                            (desired_mode = 1 and blink_2hz /= drawn_blink) then
+                            -- Remember the requested frame at its start. If a
+                            -- mode changes during writing, IDLE will redraw it.
+                            drawn_mode <= desired_mode;
+                            drawn_blink <= blink_2hz;
                             frame_page <= 0;
                             frame_col <= 0;
                             phase <= 0;
@@ -301,7 +286,7 @@ begin
                             state <= FRAME;
                         elsif desired_mode = 3 and event_pending = '1' then
                             event_pending <= '0';
-                            if event_index = 0 or tracking_mode = '1' then
+                            if event_zero = '1' or tracking_mode = '1' then
                                 frame_page <= 0;
                                 frame_col <= 0;
                                 phase <= 0;
@@ -310,26 +295,33 @@ begin
                                 point_after_frame <= '1';
                                 state <= FRAME;
                             elsif event_valid = '1' then
-                                sum_x <= 0;
-                                sum_y <= 0;
-                                state <= SCALE_POINT;
+                                coord_sum <= 0;
+                                scale_left <= scale_total;
+                                state <= SCALE_X;
                             end if;
                         end if;
-                    when SCALE_POINT =>
-                        sum_x <= sum_x + direction_x(event_index);
-                        sum_y <= sum_y + direction_y(event_index);
-                        if scale_left = 0 then state <= PREP_POINT;
+                    when SCALE_X | SCALE_Y =>
+                        coord_sum <= coord_sum + direction_value(acute_index);
+                        if scale_left = 0 then
+                            if state = SCALE_X then state <= STORE_X;
+                            else state <= PREP_POINT;
+                            end if;
                         else scale_left <= scale_left - 1;
                         end if;
-                    when PREP_POINT =>
-                        dx := sum_x / 8;
-                        dy := sum_y / 8;
-                        if event_index <= 18 then target_x := 64 + dx;
+                    when STORE_X =>
+                        dx := coord_sum / 8;
+                        if event_left = '0' then target_x := 64 + dx;
                         else target_x := 64 - dx;
                         end if;
+                        point_base_col <= target_x - 1;
+                        acute_index <= 18 - acute_index;
+                        coord_sum <= 0;
+                        scale_left <= scale_total;
+                        state <= SCALE_Y;
+                    when PREP_POINT =>
+                        dy := coord_sum / 8;
                         target_y := 62 - dy;
                         point_page <= target_y / 8;
-                        point_base_col <= target_x - 1;
                         point_col <= 0;
                         point_data <= dot_mask(target_y mod 8);
                         phase <= 0;
