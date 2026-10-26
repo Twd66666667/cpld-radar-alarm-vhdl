@@ -97,7 +97,7 @@ radar_fusion_tracking_top
 | 根目录 `radar.qpf` | 历史独立基础版 |
 | `rtl/` | 各版本共用及历史VHDL模块 |
 | `simulation/`、`fusion/sim/`、`tracking/sim/` | 已完成的Quartus VWF分层仿真工程 |
-| `docs/` | 硬件测试记录和仿真截图 |
+| `docs/` | 硬件测试记录、完整仿真档案和原始截图 |
 
 各历史工程仍能独立打开，不移动目录、不修改相对源文件路径。Quartus生成的数据库、报告、POF和临时文件由 `.gitignore` 排除；最终 POF 在本地完整编译后生成于 `fusion_tracking/`。
 
@@ -108,6 +108,16 @@ radar_fusion_tracking_top
 3. 执行完整编译，生成 `radar_fusion_tracking.pof` 后烧录。
 4. 按基础、提高、跟踪的顺序上板检查，并在切换模式前关闭SW7。
 
-本项目的仿真操作统一使用 Quartus VWF。历史模块和独立工程的仿真记录见 [`simulation/README.md`](simulation/README.md)，最终三模式融合版本身没有另做一套顶层VWF；最终结论来自完整编译、时序报告和实际烧录测试。
+## 仿真与验证档案
 
-详细资源优化与最终版内部约定见 [`fusion_tracking/README.md`](fusion_tracking/README.md)，实物现象和校准过程见 [`docs/hardware_test_log.md`](docs/hardware_test_log.md)。
+此前完成的VWF工程、结果说明和7张实验报告截图均完整保留，没有移动或压缩。集中索引见[`docs/verification/README.md`](docs/verification/README.md)，其中包含：
+
+- SG90 PWM、HC-SR04正常回波及三种异常场景截图；
+- 三次测距中值/平均滤波截图；
+- 基础版主流程联合仿真截图；
+- 提高版LCD初始化和跨页写入截图；
+- 基础、提高、双模式融合和独立跟踪版的全部VWF工程说明。
+
+本项目的仿真操作统一使用Quartus VWF。最终三模式融合版本身按项目决定没有另做一套庞大的顶层VWF；其结论来自已有分层VWF、完整编译、时序报告和实际烧录测试。
+
+详细资源优化与最终版内部约定见[`fusion_tracking/README.md`](fusion_tracking/README.md)，实物现象和校准过程见[`docs/hardware_test_log.md`](docs/hardware_test_log.md)。
